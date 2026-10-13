@@ -10,11 +10,28 @@ import type { TranscriptionOptions } from '../main/transcription'
 import type { ConversationSnapshot, HintCard, Utterance } from '../shared/conversation'
 import type { KnowledgeDoc, KnowledgeImportResult, KnowledgePatch } from '../shared/knowledge'
 import type { AvailableUpdate } from '../shared/update'
+import type { ActivationResult, ActivationReasonPayload } from '../shared/activation'
 
 // Custom APIs for renderer
 const api = {
   // Get the installed app version (package.json version at build time)
   getAppVersion: () => ipcRenderer.invoke('getAppVersion') as Promise<string>,
+  // 激活码激活 + 启动校验：HTTP 请求在主进程，渲染层通过 IPC 调用
+  activationActivate: (code: string) =>
+    ipcRenderer.invoke('activation:activate', code) as Promise<ActivationResult>,
+  activationGetDeviceId: () =>
+    ipcRenderer.invoke('activation:get-device-id') as Promise<string>,
+  activationGetReason: () =>
+    ipcRenderer.invoke('activation:get-reason') as Promise<ActivationReasonPayload | null>,
+  activationQuit: () => ipcRenderer.invoke('activation:quit'),
+  onActivationReason: (callback: (payload: ActivationReasonPayload) => void) => {
+    ipcRenderer.on('activation:reason', (_event, payload: ActivationReasonPayload) =>
+      callback(payload)
+    )
+  },
+  removeActivationReasonListener: () => {
+    ipcRenderer.removeAllListeners('activation:reason')
+  },
   // A newer release main found (null: none); Windows downloads and installs it on request
   getUpdateStatus: () => ipcRenderer.invoke('update:get-status') as Promise<AvailableUpdate | null>,
   downloadUpdate: () => ipcRenderer.invoke('update:download'),

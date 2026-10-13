@@ -33,14 +33,17 @@ import './conversation'
 import './knowledge'
 import './window-resize'
 import './model-list'
+import './activation'
 import { createWindow } from './main-window'
 import { initAutoUpdater } from './auto-updater'
 import { applyDockVisibility } from './settings'
+import { runStartupCheck } from './activation'
+import { createActivationWindow } from './activation-window'
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
@@ -92,10 +95,21 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  createWindow()
-
-  // Configure auto-updater
-  initAutoUpdater()
+  // 启动校验：在主窗口创建前调用 /api/code/check。
+  // 通过 → 创建主窗口 + 自动更新；不通过 / 网络失败 → 显示激活页。
+  // 主窗口初始 show:false（ready-to-show 才 show），校验期间用户看不到主界面，无闪屏。
+  const outcome = await runStartupCheck()
+  if (outcome.ok) {
+    createWindow()
+    // Configure auto-updater
+    initAutoUpdater()
+  } else {
+    createActivationWindow(
+      outcome.reason ?? 'expired',
+      outcome.message ?? '校验失败',
+      !!outcome.previouslyActivated
+    )
+  }
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
