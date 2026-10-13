@@ -6,8 +6,14 @@
  * 所需类型在那里内联定义。
  */
 
-/** 设备类型，固定数字 3（不要写成字符串 "3"） */
-export const DEVICE_TYPE = 3 as const
+/**
+ * 设备类型，固定值 3。
+ *
+ * 注意：需求文档写「number，不允许写成字符串 "3"」，但服务端实际实现
+ * 期望字符串——curl 实测 active 接口传 number 3 报「deviceType is empty」，
+ * 传字符串 "3" 才通过校验。check 接口两者都接受。因此这里用字符串。
+ */
+export const DEVICE_TYPE = '3' as const
 
 /** 激活 / 校验接口基址 */
 export const ACTIVATION_BASE_URL = 'http://oa.feilong520.top'

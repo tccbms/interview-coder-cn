@@ -3,12 +3,10 @@ import { useEffect, useState } from 'react'
 /**
  * 激活页：独立全屏页面，不含任何主界面功能入口。
  *
- * 注意：此文件不 import shared/activation，因为 vite renderer 配置
- * 没有 @shared alias 且跳出 root 的相对路径会失败。所需类型与函数在此内联。
+ * 不 import shared/activation（vite renderer 无 @shared alias），类型内联。
  * window.api 的类型由 preload 推导（preload 正常 import shared）。
  */
 
-// 与 shared/activation.ts 的类型结构保持一致
 interface ActivationReasonPayload {
   reason: 'expired' | 'network'
   message: string
@@ -20,21 +18,25 @@ interface ActivationResult {
   data?: unknown
 }
 
-/** 把 deviceId 脱敏成「前 8 位 + …」用于展示 */
-function maskDeviceId(id: string): string {
-  return id.length > 8 ? `${id.slice(0, 8)}…` : id
+/** 钥匙图标，激活主题 */
+function KeyIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M12 2.5a6 6 0 0 0-5.66 8.04l-3.82 3.82a1 1 0 0 0-.29.7v3.44a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-1h1a1 1 0 0 0 1-1v-1h1.4A6 6 0 1 0 12 2.5Zm2.25 5.25a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
 }
 
 export default function ActivationPage() {
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [deviceId, setDeviceId] = useState('')
-  const [copied, setCopied] = useState(false)
   const [reasonPayload, setReasonPayload] = useState<ActivationReasonPayload | null>(null)
 
   useEffect(() => {
-    window.api.activationGetDeviceId().then(setDeviceId)
     window.api.activationGetReason().then((payload) => {
       if (payload) setReasonPayload(payload)
     })
@@ -58,17 +60,6 @@ export default function ActivationPage() {
     }
   }
 
-  async function handleCopyDeviceId() {
-    if (!deviceId) return
-    try {
-      await navigator.clipboard.writeText(deviceId)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      setError('复制失败，请手动选择设备 ID 复制')
-    }
-  }
-
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault()
@@ -81,16 +72,19 @@ export default function ActivationPage() {
   const showNetworkHint = reasonPayload?.reason === 'network'
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0a0a] px-6 py-10 text-[#fafafa]">
-      <div className="w-full max-w-md space-y-6">
-        <header className="text-center">
-          <h1 className="text-2xl font-semibold">激活应用</h1>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#0a0a0a] via-[#0f0f12] to-[#0a0a0a] px-6 py-10 text-[#fafafa]">
+      <div className="w-full max-w-md space-y-7">
+        <header className="flex flex-col items-center text-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25">
+            <KeyIcon className="h-9 w-9 text-white" />
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight">激活应用</h1>
           <p className="mt-2 text-sm text-[#a1a1aa]">请输入激活码完成激活后使用</p>
         </header>
 
         {(showExpiredHint || showNetworkHint) && (
           <div
-            className={`rounded-md border px-4 py-3 text-sm ${
+            className={`rounded-lg border px-4 py-3 text-sm ${
               showExpiredHint
                 ? 'border-red-500/30 bg-red-500/10 text-red-400'
                 : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400'
@@ -106,13 +100,13 @@ export default function ActivationPage() {
         )}
 
         {error && (
-          <div className="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
             {error}
           </div>
         )}
 
         <div className="space-y-2">
-          <label htmlFor="activation-code" className="text-sm font-medium">
+          <label htmlFor="activation-code" className="text-sm font-medium text-[#d4d4d8]">
             激活码
           </label>
           <input
@@ -125,7 +119,7 @@ export default function ActivationPage() {
             disabled={loading}
             autoComplete="off"
             spellCheck={false}
-            className="w-full rounded-md border border-[#27272a] bg-[#0a0a0a] px-3 py-2 text-sm outline-none focus:border-[#3f3f46] disabled:opacity-50"
+            className="w-full rounded-lg border border-[#27272a] bg-[#18181b] px-4 py-2.5 text-sm outline-none transition focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
           />
         </div>
 
@@ -133,34 +127,12 @@ export default function ActivationPage() {
           type="button"
           onClick={handleActivate}
           disabled={loading || !code.trim()}
-          className="w-full rounded-md bg-[#3b82f6] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/20 transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
         >
           {loading ? '激活中…' : '激活'}
         </button>
 
-        <div className="rounded-md border border-[#27272a] bg-[#18181b] px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-xs text-[#a1a1aa]">当前设备 ID</div>
-              <div className="mt-1 truncate font-mono text-sm">
-                {deviceId ? maskDeviceId(deviceId) : '获取中…'}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleCopyDeviceId}
-              disabled={!deviceId}
-              className="shrink-0 rounded-md border border-[#27272a] px-3 py-1.5 text-xs transition hover:bg-[#27272a] disabled:opacity-50"
-            >
-              {copied ? '已复制' : '复制设备 ID'}
-            </button>
-          </div>
-          <p className="mt-2 text-xs text-[#a1a1aa]">
-            如需获取激活码，请复制设备 ID 后联系客服。
-          </p>
-        </div>
-
-        <p className="text-center text-xs text-[#a1a1aa]">按 Ctrl/Cmd + Enter 快速提交</p>
+        <p className="text-center text-xs text-[#71717a]">按 Ctrl/Cmd + Enter 快速提交</p>
       </div>
     </div>
   )
