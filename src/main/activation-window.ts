@@ -34,7 +34,7 @@ export function createActivationWindow(
   const win = new BrowserWindow({
     width: 480,
     height: 560,
-    title: '激活',
+    title: '胖猫面试助手',
     frame: true,
     resizable: false,
     maximizable: false,
@@ -42,6 +42,7 @@ export function createActivationWindow(
     fullscreenable: false,
     show: false,
     autoHideMenuBar: true,
+    backgroundColor: '#0a0a0a',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false

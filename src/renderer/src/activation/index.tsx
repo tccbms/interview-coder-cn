@@ -37,6 +37,7 @@ export default function ActivationPage() {
   const [reasonPayload, setReasonPayload] = useState<ActivationReasonPayload | null>(null)
 
   useEffect(() => {
+    document.title = '胖猫面试助手'
     window.api.activationGetReason().then((payload) => {
       if (payload) setReasonPayload(payload)
     })
@@ -72,19 +73,19 @@ export default function ActivationPage() {
   const showNetworkHint = reasonPayload?.reason === 'network'
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#0a0a0a] via-[#0f0f12] to-[#0a0a0a] px-6 py-10 text-[#fafafa]">
-      <div className="w-full max-w-md space-y-7">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0a0a] px-6 py-8 text-[#fafafa]">
+      <div className="flex w-full flex-col">
         <header className="flex flex-col items-center text-center">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25">
-            <KeyIcon className="h-9 w-9 text-white" />
+          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/40">
+            <KeyIcon className="h-7 w-7 text-white" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">激活应用</h1>
+          <h1 className="text-xl font-semibold tracking-tight">胖猫面试助手</h1>
           <p className="mt-2 text-sm text-[#a1a1aa]">请输入激活码完成激活后使用</p>
         </header>
 
         {(showExpiredHint || showNetworkHint) && (
           <div
-            className={`rounded-lg border px-4 py-3 text-sm ${
+            className={`mt-7 rounded-lg border px-4 py-3 text-sm ${
               showExpiredHint
                 ? 'border-red-500/30 bg-red-500/10 text-red-400'
                 : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400'
@@ -100,13 +101,13 @@ export default function ActivationPage() {
         )}
 
         {error && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
             {error}
           </div>
         )}
 
-        <div className="space-y-2">
-          <label htmlFor="activation-code" className="text-sm font-medium text-[#d4d4d8]">
+        <div className="mt-7 space-y-2">
+          <label htmlFor="activation-code" className="block text-sm font-medium text-[#d4d4d8]">
             激活码
           </label>
           <input
@@ -127,12 +128,12 @@ export default function ActivationPage() {
           type="button"
           onClick={handleActivate}
           disabled={loading || !code.trim()}
-          className="w-full rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/20 transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
+          className="mt-5 w-full rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/30 transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
         >
           {loading ? '激活中…' : '激活'}
         </button>
 
-        <p className="text-center text-xs text-[#71717a]">按 Ctrl/Cmd + Enter 快速提交</p>
+        <p className="mt-4 text-center text-xs text-[#71717a]">按 Ctrl/Cmd + Enter 快速提交</p>
       </div>
     </div>
   )
