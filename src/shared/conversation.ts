@@ -28,11 +28,13 @@ export interface HintCard {
   /** The utterances this hint answers, inclusive */
   fromId: number
   toId: number
-  source: 'auto' | 'manual'
+  source: 'auto' | 'manual' | 'follow-up'
   status: HintStatus
   text: string
   /** What the model reasoned before `text`; empty for non-thinking models */
   reasoning: string
+  /** The user's own question, for follow-up cards */
+  question?: string
   error?: string
   /** From the request to the first chunk, in ms; absent until the first chunk */
   latencyMs?: number

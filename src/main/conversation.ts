@@ -26,6 +26,11 @@ import {
  * - by the shortcut or the button, in either mode: it covers everything not yet
  *   hinted, including a sentence still being spoken, or rewrites the last hint
  *   when nothing new was said.
+ *
+ * The user can also ask their own question (`requestFollowUp`): it becomes a
+ * `follow-up` card, answered on top of the conversation so far but one-shot —
+ * earlier hints and follow-ups are never sent back with later requests, so it
+ * does not steer the hints that follow.
  */
 
 /** How much earlier conversation goes along as context, whichever runs out first */
@@ -202,9 +207,16 @@ function createCard(fromId: number, toId: number): HintCard {
 
 /**
  * The request for one hint: earlier sentences as context, then the ones the
- * hint is for. `previous` asks for a different take on an earlier hint.
+ * hint is for. `previous` asks for a different take on an earlier hint;
+ * `question` is the user's own follow-up question, answered on top of the
+ * conversation so far.
  */
-function buildMessages(fromId: number, toId: number, previous?: string): ModelMessage[] {
+function buildMessages(
+  fromId: number,
+  toId: number,
+  previous?: string,
+  question?: string
+): ModelMessage[] {
   const context: string[] = []
   let chars = 0
   const earlier = utterances.filter((u) => u.id < fromId && u.text.trim())
@@ -220,11 +232,18 @@ function buildMessages(fromId: number, toId: number, previous?: string): ModelMe
 
   const parts: string[] = []
   if (context.length > 0) parts.push(`【之前对方说过的话】\n${context.join('\n')}`)
-  parts.push(
-    `【对方刚才说的话】${unfinished ? '（还没说完）' : ''}\n${focus.map((u) => u.text).join('\n')}`
-  )
+  if (focus.length > 0) {
+    parts.push(
+      `【对方刚才说的话】${unfinished ? '（还没说完）' : ''}\n${focus.map((u) => u.text).join('\n')}`
+    )
+  }
   if (previous?.trim()) {
     parts.push(`【上一版提示】\n${previous}\n\n请换一个角度重新给出提示，不要重复上一版。`)
+  }
+  if (question?.trim()) {
+    parts.push(
+      `【我的追问】\n${question}\n\n这是用户本人的追问，请直接回答这个问题（无需回应规则不适用）。`
+    )
   }
   return [{ role: 'user', content: parts.join('\n\n') }]
 }
@@ -235,7 +254,8 @@ async function startHint(
   fromId: number,
   toId: number,
   source: HintCard['source'],
-  previous?: string
+  previous?: string,
+  question?: string
 ): Promise<void> {
   stopStream(card.id)
   Object.assign(card, {
@@ -262,7 +282,7 @@ async function startHint(
   generations.set(card.id, generation)
   const stream: HintStream = { controller: new AbortController(), startedAt: Date.now() }
   streams.set(card.id, stream)
-  const messages = buildMessages(fromId, toId, previous)
+  const messages = buildMessages(fromId, toId, previous, question)
   const outcome = await consumeStream(
     (signal) => getHintStream(messages, signal),
     stream.controller,
@@ -298,13 +318,16 @@ async function startHint(
 /**
  * The shortcut / button: a hint now. Brings the card being written (or waiting)
  * up to date, else opens one for everything not yet hinted, else rewrites the
- * last hint.
+ * last hint. Follow-up cards are the user's own thread and are left alone.
  */
 export function requestHint(): void {
   const latest = utterances.at(-1)
   const current = [...hints]
     .reverse()
-    .find((card) => card.status === 'streaming' || card.status === 'waiting')
+    .find(
+      (card) =>
+        card.source !== 'follow-up' && (card.status === 'streaming' || card.status === 'waiting')
+    )
 
   if (current) {
     const toId = Math.max(current.toId, latest?.id ?? 0)
@@ -317,12 +340,35 @@ export function requestHint(): void {
     void startHint(createCard(hintedUpTo + 1, latest.id), hintedUpTo + 1, latest.id, 'manual')
     return
   }
-  const last = hints.at(-1)
+  const last = [...hints].reverse().find((card) => card.source !== 'follow-up')
   if (last) {
     void startHint(last, last.fromId, last.toId, 'manual', last.text)
     return
   }
   send('conversation-notice', '还没有识别到对方说话')
+}
+
+/**
+ * The user's own follow-up question, answered on top of the conversation so
+ * far. One-shot: the question and its answer are not sent back with later
+ * hints (see the plan in the module comment).
+ */
+export function requestFollowUp(question: string): void {
+  const trimmed = question.trim()
+  if (!trimmed) return
+  const latest = utterances.at(-1)
+  const card: HintCard = {
+    id: nextHintId++,
+    fromId: hintedUpTo + 1,
+    toId: latest?.id ?? 0,
+    source: 'follow-up',
+    status: 'streaming',
+    text: '',
+    reasoning: '',
+    question: trimmed
+  }
+  hints.push(card)
+  void startHint(card, card.fromId, card.toId, 'follow-up', undefined, trimmed)
 }
 
 /** Stop every hint being written, and give up on the withdrawn ones */
@@ -394,5 +440,6 @@ app.on('will-quit', () => {
 
 ipcMain.handle('conversation:get-snapshot', () => getSnapshot())
 ipcMain.handle('conversation:request-hint', () => requestHint())
+ipcMain.handle('conversation:follow-up', (_event, question: string) => requestFollowUp(question))
 ipcMain.handle('conversation:stop-hints', () => stopHints())
 ipcMain.handle('conversation:clear', () => clearConversation())

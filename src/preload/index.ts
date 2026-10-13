@@ -309,6 +309,9 @@ const api = {
   getConversationSnapshot: () =>
     ipcRenderer.invoke('conversation:get-snapshot') as Promise<ConversationSnapshot>,
   requestHint: () => ipcRenderer.invoke('conversation:request-hint'),
+  // The user's own follow-up question, answered as a follow-up card
+  sendConversationFollowUp: (question: string) =>
+    ipcRenderer.invoke('conversation:follow-up', question),
   stopHints: () => ipcRenderer.invoke('conversation:stop-hints'),
   clearConversation: () => ipcRenderer.invoke('conversation:clear'),
   onConversationUtterance: (callback: (utterance: Utterance) => void) => {

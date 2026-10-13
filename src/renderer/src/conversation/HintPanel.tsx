@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
-import { Brain, Eraser, LoaderCircle, PanelLeftOpen, X } from 'lucide-react'
+import { Brain, Eraser, LoaderCircle, MessageCircle, PanelLeftOpen, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import MarkdownRenderer from '@/components/MarkdownRenderer'
@@ -162,6 +162,7 @@ function revealRest(panel: HTMLElement, card: HTMLElement) {
 
 function HintCardView({ card, ref }: { card: HintCard; ref: (el: HTMLElement | null) => void }) {
   const setFocusedHintId = useConversationStore((state) => state.setFocusedHintId)
+  const isFollowUp = card.source === 'follow-up'
   // What it answers, for when the transcript column is hidden or scrolled away
   const question = useConversationStore((state) =>
     state.utterances
@@ -182,9 +183,16 @@ function HintCardView({ card, ref }: { card: HintCard; ref: (el: HTMLElement | n
       onMouseLeave={() => setFocusedHintId(null)}
     >
       <div className="mb-1 flex items-center gap-2 text-[11px] text-app-muted-fg select-none">
-        {question && <span className="min-w-0 truncate">「{question}」</span>}
+        {isFollowUp
+          ? card.question && (
+              <span className="flex min-w-0 items-center gap-1">
+                <MessageCircle className="size-3 shrink-0" />
+                <span className="truncate">{card.question}</span>
+              </span>
+            )
+          : question && <span className="min-w-0 truncate">「{question}」</span>}
         <span className="ml-auto shrink-0">
-          {card.source === 'auto' ? '自动' : '手动'}
+          {card.source === 'auto' ? '自动' : card.source === 'manual' ? '手动' : '追问问题'}
           {card.latencyMs !== undefined && ` · ${(card.latencyMs / 1000).toFixed(1)}s`}
           {card.status === 'stopped' && ' · 已停止'}
         </span>

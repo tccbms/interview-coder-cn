@@ -1,6 +1,10 @@
-import { Lightbulb, Mic, MicOff, OctagonX, PointerOff } from 'lucide-react'
+import { useState } from 'react'
+import { Lightbulb, MessageCircle, Mic, MicOff, OctagonX, PointerOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import ShortcutRenderer from '@/components/ShortcutRenderer'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogTitle, DialogContent, DialogFooter } from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
 import { useAppStore } from '@/lib/store/app'
 import { useSettingsStore, type HintMode } from '@/lib/store/settings'
 import { useShortcutsStore } from '@/lib/store/shortcuts'
@@ -13,7 +17,7 @@ const HINT_MODES: { value: HintMode; label: string }[] = [
   { value: 'manual', label: '手动' }
 ]
 
-/** Listening, automatic / manual hints and the hint button, each with its shortcut */
+/** Listening, automatic / manual hints, the hint button and follow-up, each with its shortcut */
 export function ConversationStatusBar() {
   const { ignoreMouse } = useAppStore()
   const { shortcuts } = useShortcutsStore()
@@ -23,6 +27,8 @@ export function ConversationStatusBar() {
   const streaming = useConversationStore((state) =>
     state.hints.some((h) => h.status === 'streaming' || h.status === 'waiting')
   )
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [questionInput, setQuestionInput] = useState('')
 
   const key = (action: string) =>
     !hideShortcutHints && (
@@ -31,6 +37,18 @@ export function ConversationStatusBar() {
         className="inline-block scale-75 border border-current bg-transparent px-1 py-0 text-xs"
       />
     )
+
+  const handleDialogClose = () => {
+    setIsDialogOpen(false)
+    setQuestionInput('')
+  }
+
+  const handleSubmitQuestion = () => {
+    const question = questionInput.trim()
+    if (!question) return
+    void window.api.sendConversationFollowUp(question)
+    handleDialogClose()
+  }
 
   return (
     <div className="flex h-8 shrink-0 items-center gap-3 border-t border-app-border bg-app-status px-3 text-xs text-app-status-fg select-none">
@@ -84,6 +102,14 @@ export function ConversationStatusBar() {
         </button>
       )}
 
+      <button
+        className="flex items-center gap-1 cursor-pointer"
+        onClick={() => setIsDialogOpen(true)}
+      >
+        <MessageCircle className="size-3.5" />
+        追问问题
+      </button>
+
       {ignoreMouse && (
         <span className="ml-auto flex items-center gap-1">
           <PointerOff className="size-3.5" />
@@ -91,6 +117,36 @@ export function ConversationStatusBar() {
           {key('ignoreOrEnableMouse')}
         </span>
       )}
+
+      {/* Follow-up Question Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTitle className="sr-only">追问</DialogTitle>
+        <DialogContent>
+          <div className="py-4">
+            <Textarea
+              placeholder="请输入追问内容，按 Ctrl+Enter 提交..."
+              value={questionInput}
+              className="min-h-24"
+              onChange={(e) => setQuestionInput(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault()
+                  handleSubmitQuestion()
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleDialogClose}>
+              取消
+            </Button>
+            <Button onClick={handleSubmitQuestion} disabled={!questionInput.trim()}>
+              提交
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -38,9 +38,10 @@ function title(startedAt: number): string {
 }
 
 function hintLabel(card: HintCard): string {
-  if (card.status === 'stopped') return '**提示**（已停止）'
-  if (card.status === 'streaming') return '**提示**（未写完）'
-  return '**提示**'
+  const label = card.source === 'follow-up' ? '追问问题' : '提示'
+  if (card.status === 'stopped') return `**${label}**（已停止）`
+  if (card.status === 'streaming') return `**${label}**（未写完）`
+  return `**${label}**`
 }
 
 /**
@@ -70,7 +71,13 @@ export function formatConversation({
     if (heard.length > 0) {
       parts.push('**对方**', heard.map((text) => `> ${text}`).join('\n>\n'))
     }
-    if (card) parts.push(hintLabel(card), card.text.trim())
+    if (card) {
+      // A follow-up carries the user's own question, as their line in the record
+      if (card.source === 'follow-up' && card.question?.trim()) {
+        parts.push('**我**', `> ${card.question.trim().replace(/\s*\n\s*/g, ' ')}`)
+      }
+      parts.push(hintLabel(card), card.text.trim())
+    }
     rounds.push(parts.join('\n\n'))
     heard = []
   }
