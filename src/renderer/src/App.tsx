@@ -5,7 +5,7 @@ import CoderPage from '@/coder'
 import ConversationPage from '@/conversation'
 import SettingsPage from '@/settings'
 import HelpPage from '@/help'
-import ActivationPage from '@/activation'
+import LoginPage from '@/auth'
 import { OverlayToolbar } from '@/coder/OverlayToolbar'
 import { useSettingsStore } from '@/lib/store/settings'
 import { useShortcutsStore } from '@/lib/store/shortcuts'
@@ -54,7 +54,7 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Reaching the app through the activation page fetches the configuration
+  // Reaching the app through the login page fetches the configuration
   // after the window is up, and main pushes it then
   useEffect(() => {
     window.api.onRemoteConfig((remoteConfig) => {
@@ -101,10 +101,10 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    // 激活页不注册全局快捷键：激活期间无需快捷键，且避免干扰其他应用。
+    // 登录页不注册全局快捷键：登录期间无需快捷键，且避免干扰其他应用。
     // 用 window.location.hash 判断，不能调 useLocation()——App 组件创建 <HashRouter>，
     // 自身在 Router context 之外，调用 useLocation 会抛错导致白屏。
-    if (window.location.hash === '#/activation') return
+    if (window.location.hash === '#/login') return
     console.log('App initShortcuts:', shortcuts) // DEBUG: 检查新键
     window.api.initShortcuts(shortcuts)
     window.api.getShortcuts().then((shortcutsStatus) => {
@@ -123,7 +123,7 @@ export default function App() {
           <Route path="conversation" element={<ConversationPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="help" element={<HelpPage />} />
-          <Route path="activation" element={<ActivationPage />} />
+          <Route path="login" element={<LoginPage />} />
           <Route path="toolbar" element={<OverlayToolbar />} />
         </Routes>
       </HashRouter>

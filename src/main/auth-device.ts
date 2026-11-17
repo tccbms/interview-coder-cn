@@ -5,7 +5,7 @@ import { rename, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { networkInterfaces } from 'node:os'
 import { app } from 'electron'
-import { maskDeviceId, type ActivationStatus } from '../shared/activation'
+import { maskDeviceId } from '../shared/auth'
 
 /**
  * 设备唯一标识的生成与持久化。
@@ -19,62 +19,40 @@ import { maskDeviceId, type ActivationStatus } from '../shared/activation'
  * 取到指纹后先 trim + toLowerCase 规范化，再 SHA256 哈希成字符串，
  * 避免直接暴露硬件信息，也保证不同 macOS 版本格式微变时结果稳定。
  *
- * 持久化到 `userData/activation.json`，原子写（.tmp 再 rename）。
+ * 持久化到 `userData/device.json`，原子写（.tmp 再 rename）。
+ * 兼容旧的 activation.json：老用户的 deviceId 直接沿用，不重新生成。
  */
 
-const FILE_NAME = 'activation.json'
+const FILE_NAME = 'device.json'
+const LEGACY_FILE_NAME = 'activation.json'
 
-let cachedStatus: ActivationStatus | null | undefined
 let cachedDeviceId: string | null = null
 
-function statusPath(): string {
-  return join(app.getPath('userData'), FILE_NAME)
-}
-
-/** 读磁盘上的激活状态；返回 null 表示从未激活过 */
-export function readActivationStatus(): ActivationStatus | null {
-  if (cachedStatus !== undefined) return cachedStatus
-  try {
-    if (existsSync(statusPath())) {
-      const saved = JSON.parse(readFileSync(statusPath(), 'utf-8')) as Partial<ActivationStatus>
+function readSavedDeviceId(): string | null {
+  for (const name of [FILE_NAME, LEGACY_FILE_NAME]) {
+    try {
+      const path = join(app.getPath('userData'), name)
+      if (!existsSync(path)) continue
+      const saved = JSON.parse(readFileSync(path, 'utf-8')) as { deviceId?: unknown }
       if (typeof saved.deviceId === 'string' && saved.deviceId) {
-        cachedStatus = {
-          deviceId: saved.deviceId,
-          activated: !!saved.activated,
-          lastCheckedAt: typeof saved.lastCheckedAt === 'number' ? saved.lastCheckedAt : undefined
-        }
-        cachedDeviceId = cachedStatus.deviceId
-        return cachedStatus
+        return saved.deviceId
       }
+    } catch (error) {
+      console.error('[auth] Failed to read device id:', error)
     }
-  } catch (error) {
-    console.error('[activation] Failed to read status:', error)
   }
-  cachedStatus = null
   return null
 }
 
-async function writeAtomic(path: string, content: string): Promise<void> {
-  const temp = `${path}.tmp`
-  await writeFile(temp, content, 'utf-8')
-  await rename(temp, path)
-}
-
-/** 合并写盘：patch 里的字段覆盖现有值，deviceId 不会被清空 */
-export async function writeActivationStatus(patch: Partial<ActivationStatus>): Promise<void> {
-  const current = readActivationStatus() ?? { deviceId: cachedDeviceId ?? '', activated: false }
-  const next: ActivationStatus = {
-    deviceId: patch.deviceId || current.deviceId,
-    activated: patch.activated ?? current.activated,
-    lastCheckedAt: patch.lastCheckedAt ?? current.lastCheckedAt
-  }
-  cachedStatus = next
-  cachedDeviceId = next.deviceId
+async function saveDeviceId(deviceId: string): Promise<void> {
   try {
     mkdirSync(app.getPath('userData'), { recursive: true })
-    await writeAtomic(statusPath(), JSON.stringify(next, null, 2))
+    const path = join(app.getPath('userData'), FILE_NAME)
+    const temp = `${path}.tmp`
+    await writeFile(temp, JSON.stringify({ deviceId }, null, 2), 'utf-8')
+    await rename(temp, path)
   } catch (error) {
-    console.error('[activation] Failed to write status:', error)
+    console.error('[auth] Failed to save device id:', error)
   }
 }
 
@@ -137,11 +115,11 @@ function generateDeviceId(): string {
   if (fingerprint) {
     const normalized = fingerprint.trim().toLowerCase()
     const hash = createHash('sha256').update(normalized).digest('hex')
-    console.log('[activation] deviceId from hardware fingerprint:', maskDeviceId(hash))
+    console.log('[auth] deviceId from hardware fingerprint:', maskDeviceId(hash))
     return hash
   }
   const uuid = randomUUID()
-  console.log('[activation] deviceId from randomUUID (hardware unavailable):', maskDeviceId(uuid))
+  console.log('[auth] deviceId from randomUUID (hardware unavailable):', maskDeviceId(uuid))
   return uuid
 }
 
@@ -151,13 +129,13 @@ function generateDeviceId(): string {
  */
 export async function getDeviceId(): Promise<string> {
   if (cachedDeviceId) return cachedDeviceId
-  const status = readActivationStatus()
-  if (status?.deviceId) {
-    cachedDeviceId = status.deviceId
-    return cachedDeviceId
+  const saved = readSavedDeviceId()
+  if (saved) {
+    cachedDeviceId = saved
+    return saved
   }
   const id = generateDeviceId()
   cachedDeviceId = id
-  await writeActivationStatus({ deviceId: id, activated: false })
+  await saveDeviceId(id)
   return id
 }

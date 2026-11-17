@@ -33,12 +33,11 @@ import './conversation'
 import './knowledge'
 import './window-resize'
 import './model-list'
-import './activation'
+import './auth'
 import { createWindow } from './main-window'
-import { initAutoUpdater } from './auto-updater'
 import { applyDockVisibility } from './settings'
-import { runStartupCheck } from './activation'
-import { createActivationWindow } from './activation-window'
+import { enterMainWindow, validateStoredToken } from './auth'
+import { createLoginWindow } from './login-window'
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -95,20 +94,14 @@ app.whenReady().then(async () => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // 启动校验：在主窗口创建前调用 /api/code/check。
-  // 通过 → 创建主窗口 + 自动更新；不通过 / 网络失败 → 显示激活页。
+  // 启动校验：本地 token + /api/account/profile。
+  // 通过 → 拉远程配置并创建主窗口；未登录 / 失效 / 网络失败 → 登录页。
   // 主窗口初始 show:false（ready-to-show 才 show），校验期间用户看不到主界面，无闪屏。
-  const outcome = await runStartupCheck()
+  const outcome = await validateStoredToken()
   if (outcome.ok) {
-    createWindow()
-    // Configure auto-updater
-    initAutoUpdater()
+    await enterMainWindow()
   } else {
-    createActivationWindow(
-      outcome.reason ?? 'expired',
-      outcome.message ?? '校验失败',
-      !!outcome.previouslyActivated
-    )
+    createLoginWindow(outcome.reason, outcome.message)
   }
 
   app.on('activate', function () {

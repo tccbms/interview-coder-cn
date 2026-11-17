@@ -10,22 +10,26 @@ import type { TranscriptionOptions } from '../main/transcription'
 import type { ConversationSnapshot, HintCard, Utterance } from '../shared/conversation'
 import type { KnowledgeDoc, KnowledgeImportResult, KnowledgePatch } from '../shared/knowledge'
 import type { AvailableUpdate } from '../shared/update'
-import type { ActivationResult, ActivationReasonPayload } from '../shared/activation'
+import type { AuthResult, LoginReasonPayload } from '../shared/auth'
 import type { RemoteConfig } from '../shared/remote-config'
 
 // Custom APIs for renderer
 const api = {
   // Get the installed app version (package.json version at build time)
   getAppVersion: () => ipcRenderer.invoke('getAppVersion') as Promise<string>,
-  // 激活码激活 + 启动校验：HTTP 请求在主进程，渲染层通过 IPC 调用
-  activationActivate: (code: string) =>
-    ipcRenderer.invoke('activation:activate', code) as Promise<ActivationResult>,
-  activationGetDeviceId: () =>
-    ipcRenderer.invoke('activation:get-device-id') as Promise<string>,
-  activationGetReason: () =>
-    ipcRenderer.invoke('activation:get-reason') as Promise<ActivationReasonPayload | null>,
-  activationQuit: () => ipcRenderer.invoke('activation:quit'),
-  // The endpoint keys, speech key and latest version the check API returned
+  // 账号密码登录 + 启动 token 校验：HTTP 请求在主进程，渲染层通过 IPC 调用
+  authLogin: (account: string, password: string) =>
+    ipcRenderer.invoke('auth:login', account, password) as Promise<AuthResult>,
+  authLogout: () => ipcRenderer.invoke('auth:logout'),
+  authGetReason: () => ipcRenderer.invoke('auth:get-reason') as Promise<LoginReasonPayload | null>,
+  authQuit: () => ipcRenderer.invoke('auth:quit'),
+  onAuthReason: (callback: (payload: LoginReasonPayload) => void) => {
+    ipcRenderer.on('auth:reason', (_event, payload: LoginReasonPayload) => callback(payload))
+  },
+  removeAuthReasonListener: () => {
+    ipcRenderer.removeAllListeners('auth:reason')
+  },
+  // The endpoint keys, speech key and latest version the config API returned
   getRemoteConfig: () => ipcRenderer.invoke('get-remote-config') as Promise<RemoteConfig | null>,
   onRemoteConfig: (callback: (config: RemoteConfig) => void) => {
     ipcRenderer.on('remote-config', (_event, config: RemoteConfig) => callback(config))
@@ -33,15 +37,7 @@ const api = {
   removeRemoteConfigListener: () => {
     ipcRenderer.removeAllListeners('remote-config')
   },
-  onActivationReason: (callback: (payload: ActivationReasonPayload) => void) => {
-    ipcRenderer.on('activation:reason', (_event, payload: ActivationReasonPayload) =>
-      callback(payload)
-    )
-  },
-  removeActivationReasonListener: () => {
-    ipcRenderer.removeAllListeners('activation:reason')
-  },
-  // A newer release the check API announced (null: none), with its download link
+  // A newer release the config API announced (null: none), with its download link
   getUpdateStatus: () => ipcRenderer.invoke('update:get-status') as Promise<AvailableUpdate | null>,
   onUpdateStatus: (callback: (update: AvailableUpdate) => void) => {
     ipcRenderer.on('update-status', (_event, update: AvailableUpdate) => callback(update))
