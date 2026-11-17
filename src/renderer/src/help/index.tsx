@@ -14,7 +14,7 @@ import ShortcutRenderer from '@/components/ShortcutRenderer'
 import { platformAlt } from '@/lib/utils/env'
 import { useSettingsStore } from '@/lib/store/settings'
 import { MODE_PATHS } from '@/lib/use-mode-page'
-import { HelpSection } from './components'
+import { HelpSection, DownloadLink } from './components'
 import { Shortcuts } from './Shortcuts'
 import { OverlayToolbarHelp } from './OverlayToolbar'
 import { FAQ } from './FAQ'
@@ -49,16 +49,11 @@ export default function HelpPage() {
           <UpdateNotice />
           <p className="text-gray-700">
             欢迎使用截屏解题助手！无论是 编程面试 / 在线考试 还是其他解题场景，
-            该工具都可以帮助您快速截图，分析屏幕内容，并给出解答建议。 您可以访问本项目{' '}
-            <a
-              href="https://github.com/ooboqoo/interview-coder-cn/wiki"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 text-blue-600 hover:underline"
-            >
-              GitHub Wiki
-            </a>{' '}
-            获取更多帮助信息（如安装说明、AI 配置填法、报错排查等）。
+            该工具都可以帮助您快速截图，分析屏幕内容，并给出解答建议。 您可以访问{' '}
+            <DownloadLink className="inline-flex items-center gap-1 text-blue-600 hover:underline">
+              下载页面
+            </DownloadLink>{' '}
+            获取最新版本与安装说明（如 AI 配置填法、报错排查等）。
           </p>
           <div className="bg-gray-700/10 rounded-lg p-4">
             <h3 className="font-semibold mb-2">主要功能：</h3>
@@ -127,31 +122,15 @@ export default function HelpPage() {
             <div className="border border-gray-400 rounded-lg p-4">
               <h3 className="font-semibold mb-2 ">常见问题排查</h3>
               <p className="text-gray-700">
-                在{' '}
-                <a
-                  href="https://github.com/ooboqoo/interview-coder-cn/wiki"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  GitHub Wiki
-                </a>{' '}
+                在 <DownloadLink className="text-blue-600 hover:underline">下载页面</DownloadLink>{' '}
                 上按报错或现象查找原因和解决办法
               </p>
             </div>
             <div className="border border-gray-400 rounded-lg p-4">
-              <h3 className="font-semibold mb-2 ">GitHub Issues</h3>
+              <h3 className="font-semibold mb-2 ">下载最新版本</h3>
               <p className="text-gray-700">
-                在{' '}
-                <a
-                  href="https://github.com/ooboqoo/interview-coder-cn/issues"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  GitHub Issues
-                </a>{' '}
-                上提交问题报告和功能请求
+                在 <DownloadLink className="text-blue-600 hover:underline">下载页面</DownloadLink>{' '}
+                获取最新安装包和更新说明
               </p>
             </div>
           </div>

@@ -66,10 +66,12 @@ function httpPost(url: string, body: unknown, timeoutMs = 10_000): Promise<{ sta
   })
 }
 
-export async function postActivationAPI(
-  path: string,
-  body: unknown
-): Promise<ActivationResult> {
+/** 校验接口的响应里带着大模型和语音的 key，日志里不能出现原文 */
+function redactSecrets(text: string): string {
+  return text.replace(/sk-[A-Za-z0-9._-]{6,}/g, 'sk-***')
+}
+
+export async function postActivationAPI(path: string, body: unknown): Promise<ActivationResult> {
   const url = `${ACTIVATION_BASE_URL}${path}`
   const bodyStr = toFormBody(body)
   console.log('[activation] POST', url, 'form:', bodyStr)
@@ -89,7 +91,7 @@ export async function postActivationAPI(
     return { ok: false, message: `服务端返回 HTTP ${res.status}` }
   }
 
-  console.log('[activation] response status:', res.status, 'raw:', res.text)
+  console.log('[activation] response status:', res.status, 'raw:', redactSecrets(res.text))
 
   let json: { code?: unknown; msg?: unknown; data?: unknown }
   try {

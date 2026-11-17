@@ -11,6 +11,7 @@ import type { ConversationSnapshot, HintCard, Utterance } from '../shared/conver
 import type { KnowledgeDoc, KnowledgeImportResult, KnowledgePatch } from '../shared/knowledge'
 import type { AvailableUpdate } from '../shared/update'
 import type { ActivationResult, ActivationReasonPayload } from '../shared/activation'
+import type { RemoteConfig } from '../shared/remote-config'
 
 // Custom APIs for renderer
 const api = {
@@ -24,6 +25,14 @@ const api = {
   activationGetReason: () =>
     ipcRenderer.invoke('activation:get-reason') as Promise<ActivationReasonPayload | null>,
   activationQuit: () => ipcRenderer.invoke('activation:quit'),
+  // The endpoint keys, speech key and latest version the check API returned
+  getRemoteConfig: () => ipcRenderer.invoke('get-remote-config') as Promise<RemoteConfig | null>,
+  onRemoteConfig: (callback: (config: RemoteConfig) => void) => {
+    ipcRenderer.on('remote-config', (_event, config: RemoteConfig) => callback(config))
+  },
+  removeRemoteConfigListener: () => {
+    ipcRenderer.removeAllListeners('remote-config')
+  },
   onActivationReason: (callback: (payload: ActivationReasonPayload) => void) => {
     ipcRenderer.on('activation:reason', (_event, payload: ActivationReasonPayload) =>
       callback(payload)
@@ -32,10 +41,8 @@ const api = {
   removeActivationReasonListener: () => {
     ipcRenderer.removeAllListeners('activation:reason')
   },
-  // A newer release main found (null: none); Windows downloads and installs it on request
+  // A newer release the check API announced (null: none), with its download link
   getUpdateStatus: () => ipcRenderer.invoke('update:get-status') as Promise<AvailableUpdate | null>,
-  downloadUpdate: () => ipcRenderer.invoke('update:download'),
-  installUpdate: () => ipcRenderer.invoke('update:install'),
   onUpdateStatus: (callback: (update: AvailableUpdate) => void) => {
     ipcRenderer.on('update-status', (_event, update: AvailableUpdate) => callback(update))
   },

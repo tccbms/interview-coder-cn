@@ -28,22 +28,40 @@ export default function App() {
   }, [theme])
 
   useEffect(() => {
-    window.api.getAppSettings().then((settings) => {
-      const blankFields = Object.keys(settings).filter(
-        (key) => settings[key] && !settingsStore[key]
-      )
-      settingsStore.syncSettings(
-        blankFields.reduce(
-          (acc, key) => {
-            acc[key] = settings[key]
-            return acc
-          },
-          {} as Partial<typeof settingsStore>
+    Promise.all([window.api.getAppSettings(), window.api.getRemoteConfig()]).then(
+      ([settings, remoteConfig]) => {
+        const blankFields = Object.keys(settings).filter(
+          (key) => settings[key] && !settingsStore[key]
         )
-      )
-      setInitialized(true)
-    })
+        settingsStore.syncSettings(
+          blankFields.reduce(
+            (acc, key) => {
+              acc[key] = settings[key]
+              return acc
+            },
+            {} as Partial<typeof settingsStore>
+          )
+        )
+        // The check API's endpoints and keys win over whatever was saved
+        // locally; they go in after the sync above so it cannot undo them
+        if (remoteConfig) {
+          useSettingsStore.getState().applyRemoteConfig(remoteConfig)
+          useAppStore.getState().setDownloadUrl(remoteConfig.downloadUrl || null)
+        }
+        setInitialized(true)
+      }
+    )
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Reaching the app through the activation page fetches the configuration
+  // after the window is up, and main pushes it then
+  useEffect(() => {
+    window.api.onRemoteConfig((remoteConfig) => {
+      useSettingsStore.getState().applyRemoteConfig(remoteConfig)
+      useAppStore.getState().setDownloadUrl(remoteConfig.downloadUrl || null)
+    })
+    return () => window.api.removeRemoteConfigListener()
   }, [])
 
   useEffect(() => {

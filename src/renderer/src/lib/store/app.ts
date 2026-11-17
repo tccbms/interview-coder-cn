@@ -11,6 +11,9 @@ interface AppStore extends AppState {
   /** A newer release main found; the header and the help page show it */
   update: AvailableUpdate | null
   setUpdate: (update: AvailableUpdate | null) => void
+  /** Where the check API says to get the newest build; the help page links to it */
+  downloadUrl: string | null
+  setDownloadUrl: (url: string | null) => void
   setIgnoreMouse: (ignore: boolean) => void
   toggleIgnoreMouse: () => void
   /** Adopt what main reports; it sends its whole state, of which these are the fields used here */
@@ -27,6 +30,10 @@ export const useAppStore = create<AppStore>()((set) => ({
   update: null,
   setUpdate: (update) => {
     set({ update })
+  },
+  downloadUrl: null,
+  setDownloadUrl: (downloadUrl) => {
+    set({ downloadUrl })
   },
   setIgnoreMouse: (ignore) => {
     set({ ignoreMouse: ignore })

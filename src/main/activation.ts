@@ -14,6 +14,9 @@ import {
 } from './activation-device'
 import { closeActivationWindow } from './activation-window'
 import { createWindow } from './main-window'
+import { initAutoUpdater } from './auto-updater'
+import { applyRemoteConfig } from './remote-config'
+import { parseRemoteConfig, type RemoteConfig } from '../shared/remote-config'
 
 /**
  * 激活码功能的启动校验编排与 IPC handler。
@@ -31,6 +34,8 @@ export interface CheckOutcome {
   reason?: ActivationFailureReason
   message?: string
   previouslyActivated?: boolean
+  /** The endpoint/key/version the server sent with a passed check */
+  remoteConfig?: RemoteConfig
 }
 
 /** 把 postActivationAPI 的失败文案归类成 network / expired */
@@ -55,8 +60,12 @@ export async function runStartupCheck(): Promise<CheckOutcome> {
       activated: true,
       lastCheckedAt: Date.now()
     })
+    // The server also says where the AI and speech endpoints are, and which
+    // version is current; these replace whatever was configured locally
+    const remoteConfig = parseRemoteConfig(result.data) ?? undefined
+    if (remoteConfig) applyRemoteConfig(remoteConfig)
     console.log('[activation] check passed, entering main window')
-    return { ok: true }
+    return { ok: true, remoteConfig }
   }
 
   const reason = classifyFailure(result.message)
@@ -70,7 +79,7 @@ export async function runStartupCheck(): Promise<CheckOutcome> {
 }
 
 /** 激活成功后：持久化 → 创建主窗口 → 主窗口显示后关激活窗口 */
-async function onActivationSuccess(): Promise<void> {
+async function onActivationSuccess(data?: unknown): Promise<void> {
   const deviceId = await getDeviceId()
   await writeActivationStatus({
     deviceId,
@@ -79,7 +88,17 @@ async function onActivationSuccess(): Promise<void> {
   })
   console.log('[activation] activate success, switching to main window')
 
+  // The activate response need not carry the configuration; the check
+  // endpoint does, and asking now saves the user a restart
+  const remoteConfig = parseRemoteConfig(data)
+  if (remoteConfig) {
+    applyRemoteConfig(remoteConfig)
+  } else {
+    await runStartupCheck()
+  }
+
   createWindow()
+  initAutoUpdater()
   if (global.mainWindow) {
     global.mainWindow.once('ready-to-show', () => {
       closeActivationWindow()
@@ -112,7 +131,7 @@ ipcMain.handle('activation:activate', async (_event, code: string): Promise<Acti
     })
 
     if (result.ok) {
-      await onActivationSuccess()
+      await onActivationSuccess(result.data)
     } else {
       console.log('[activation] activate failed:', result.message)
     }

@@ -18,6 +18,7 @@ import { createProfile, type ApiProfile } from '../api-profiles'
 import type { CaptureRegion } from '../../../../shared/capture-region'
 import type { AppMode } from '../../../../shared/api-profile'
 import type { HintMode } from '../../../../shared/conversation'
+import type { RemoteConfig } from '../../../../shared/remote-config'
 
 export type { Theme }
 export type { ApiProfile }
@@ -353,6 +354,12 @@ interface SettingsStore extends Settings {
   /** Step the window opacity within [OPACITY_MIN, OPACITY_MAX] */
   adjustOpacity: (delta: number) => void
   syncSettings: (settings: Partial<Settings>) => void
+  /**
+   * Adopt the endpoint, keys and latest version the check API returned. The
+   * server is authoritative: they replace what the profiles and the speech
+   * setting held before, so a rotated key takes effect on the next start.
+   */
+  applyRemoteConfig: (config: RemoteConfig) => void
   /** Make a scene its mode's active one */
   setActiveScene: (id: string) => void
   /** Step a mode to its next scene, wrapping at the end, and report its name */
@@ -658,6 +665,35 @@ export const useSettingsStore = create<SettingsStore>()(
           ])
         )
         if (Object.keys(credentials).length > 0) get().updateCredential(credentials)
+      },
+      applyRemoteConfig: (config) => {
+        set((state) => {
+          // Both modes and the profile being edited send requests with
+          // whatever profile they point at, so each of those takes the new
+          // endpoint and key; their own model choice is left alone
+          const patch: Partial<Omit<ApiProfile, 'id'>> = {}
+          if (config.aiUrl) patch.apiBaseURL = config.aiUrl
+          if (config.aiKey) patch.apiKey = config.aiKey
+          const ids = new Set(
+            [state.activeProfileId, state.screenshotProfileId, state.conversationProfileId].filter(
+              Boolean
+            )
+          )
+          const apiProfiles =
+            Object.keys(patch).length > 0
+              ? state.apiProfiles.map((profile) =>
+                  ids.has(profile.id) ? { ...profile, ...patch } : profile
+                )
+              : state.apiProfiles
+          return {
+            apiProfiles,
+            // The flat fields mirror the active profile, which is patched above
+            ...(config.aiUrl ? { apiBaseURL: config.aiUrl } : {}),
+            ...(config.aiKey ? { apiKey: config.aiKey } : {}),
+            ...(config.audioKey ? { dashscopeApiKey: config.audioKey } : {}),
+            hasConfiguredApi: state.hasConfiguredApi || !!config.aiKey
+          }
+        })
       },
       setActiveScene: (id) => {
         set((state) => {

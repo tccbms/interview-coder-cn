@@ -1,7 +1,7 @@
 import { BookOpen } from 'lucide-react'
 import ShortcutRenderer from '@/components/ShortcutRenderer'
 import { platformAlt } from '@/lib/utils/env'
-import { HelpSection } from './components'
+import { HelpSection, DownloadLink } from './components'
 
 const faqs = [
   {
@@ -32,15 +32,7 @@ const faqs = [
         模型」里的三项和平台对不上：API Base URL 大多以 /v1 结尾，不要带上 /chat/completions；API
         Key
         要和地址属于同一个平台；模型名按平台文档一字不差地填，截图模式还要选能识图的模型。各种报错的原因和解决办法见{' '}
-        <a
-          href="https://github.com/ooboqoo/interview-coder-cn/wiki/AI模型配置与调用失败"
-          target="_blank"
-          rel="noreferrer"
-          className="text-blue-600 hover:underline"
-        >
-          GitHub Wiki
-        </a>
-        。
+        <DownloadLink className="text-blue-600 hover:underline">下载页面</DownloadLink>。
       </span>
     )
   },
@@ -70,16 +62,8 @@ const faqs = [
     question: '分享屏幕时，对方能看到应用吗？',
     answer: (
       <span>
-        工具窗口在共享屏幕时自动隐藏(对方不可见)，但小部分会议软件可能需要配置才能隐藏。所以如果你对隐身功能有需求，务必在正式使用前用「当前电脑」+「当前会议软件」测试一下。相关讨论见{' '}
-        <a
-          href="https://github.com/ooboqoo/interview-coder-cn/issues/21"
-          target="_blank"
-          rel="noreferrer"
-          className="text-blue-600 hover:underline"
-        >
-          GitHub Issue #21
-        </a>
-        。
+        工具窗口在共享屏幕时自动隐藏(对方不可见)，但小部分会议软件可能需要配置才能隐藏。所以如果你对隐身功能有需求，务必在正式使用前用「当前电脑」+「当前会议软件」测试一下。详见{' '}
+        <DownloadLink className="text-blue-600 hover:underline">下载页面</DownloadLink>。
       </span>
     )
   },
