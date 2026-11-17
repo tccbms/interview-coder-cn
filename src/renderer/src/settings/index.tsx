@@ -9,6 +9,7 @@ import {
   MessagesSquare,
   Mic,
   Palette,
+  UserRound,
   type LucideIcon
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -23,8 +24,17 @@ import { ShortcutsSection } from './sections/ShortcutsSection'
 import { ScreenshotSection } from './sections/ScreenshotSection'
 import { ConversationSection } from './sections/ConversationSection'
 import { KnowledgeSection } from './sections/KnowledgeSection'
+import { AccountSection } from './sections/AccountSection'
 
-type Tab = 'ai' | 'knowledge' | 'voice' | 'appearance' | 'shortcuts' | 'screenshot' | 'conversation'
+type Tab =
+  | 'account'
+  | 'ai'
+  | 'knowledge'
+  | 'voice'
+  | 'appearance'
+  | 'shortcuts'
+  | 'screenshot'
+  | 'conversation'
 
 /**
  * Grouped by what a setting affects: the shared ones first, then one group per
@@ -34,6 +44,7 @@ const NAV: { heading: string; items: { tab: Tab; label: string; Icon: LucideIcon
   {
     heading: '通用',
     items: [
+      { tab: 'account', label: '个人中心', Icon: UserRound },
       { tab: 'ai', label: 'AI 模型', Icon: Bot },
       { tab: 'knowledge', label: '资料库', Icon: LibraryBig },
       { tab: 'voice', label: '语音', Icon: Mic },
@@ -99,6 +110,7 @@ export default function SettingsPage() {
   }, [])
 
   const sections: Record<Tab, ReactNode> = {
+    account: <AccountSection />,
     ai: <AiModelsSection />,
     knowledge: <KnowledgeSection />,
     voice: <VoiceSection />,

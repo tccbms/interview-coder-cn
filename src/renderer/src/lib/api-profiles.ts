@@ -21,7 +21,7 @@ export function createProfile(partial?: Partial<ApiProfile>): ApiProfile {
     apiKey: partial?.apiKey ?? '',
     apiHeaders: partial?.apiHeaders ?? '',
     model,
-    disableThinking: partial?.disableThinking ?? false,
+    disableThinking: partial?.disableThinking ?? true,
     vision: partial?.vision ?? knownVision(model)
   }
 }

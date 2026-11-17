@@ -8,7 +8,8 @@ import { postForm } from './http'
 import { createWindow } from './main-window'
 import { initAutoUpdater } from './auto-updater'
 import { fetchRemoteConfig } from './remote-config'
-import { closeLoginWindow } from './login-window'
+import { closeLoginWindow, createLoginWindow } from './login-window'
+import { hideToolbar } from './toolbar-window'
 
 /**
  * 账号密码登录（第一版简化）：
@@ -161,8 +162,14 @@ ipcMain.handle('auth:logout', async () => {
     await postForm('/api/account/logout', { deviceId }, token)
   }
   clearAuth()
-  app.relaunch()
-  app.exit(0)
+  // 不用 app.relaunch()：同进程内回登录窗更可靠，避免重启失败软件直接消失
+  hideToolbar()
+  createLoginWindow('none', '')
+  const mainWindow = global.mainWindow
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    global.mainWindow = null
+    mainWindow.close()
+  }
 })
 
 ipcMain.handle('auth:quit', () => app.quit())

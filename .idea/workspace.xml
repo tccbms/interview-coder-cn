@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1359ae34-a724-47d6-a7bb-2545e9ef2079" name="更改" comment="增加激活码功能" />
+    <list default="true" id="1359ae34-a724-47d6-a7bb-2545e9ef2079" name="更改" comment="增加登录功能" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -96,6 +96,7 @@
       <workItem from="1791861438675" duration="1427000" />
       <workItem from="1791919001724" duration="1000" />
       <workItem from="1794924978077" duration="2295000" />
+      <workItem from="1794939320645" duration="523000" />
     </task>
     <task id="LOCAL-00001" summary="对话模式增加追问问题功能">
       <option name="closed" value="true" />
@@ -121,7 +122,15 @@
       <option name="project" value="LOCAL" />
       <updated>1794925213159</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="增加登录功能">
+      <option name="closed" value="true" />
+      <created>1794939351513</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1794939351513</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -147,7 +156,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="对话模式增加追问问题功能" />
     <MESSAGE value="增加激活码功能" />
-    <option name="LAST_COMMIT_MESSAGE" value="增加激活码功能" />
+    <MESSAGE value="增加登录功能" />
+    <option name="LAST_COMMIT_MESSAGE" value="增加登录功能" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>

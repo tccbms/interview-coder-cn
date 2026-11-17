@@ -386,7 +386,7 @@ const defaultSettings: Settings = {
   apiKey: '',
   apiHeaders: '',
   model: '',
-  disableThinking: false,
+  disableThinking: true,
   customModels: [],
   customModelsByBaseURL: {},
   modelByBaseURL: {},
@@ -874,7 +874,7 @@ function reconcileApiProfiles(state: Settings): ApiProfile[] {
       apiKey: state.apiKey ?? '',
       apiHeaders: state.apiHeaders ?? '',
       model: state.model ?? '',
-      disableThinking: false,
+      disableThinking: true,
       vision: knownVision(state.model ?? '')
     }
     state.activeProfileId = seeded.id

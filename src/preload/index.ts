@@ -11,6 +11,7 @@ import type { ConversationSnapshot, HintCard, Utterance } from '../shared/conver
 import type { KnowledgeDoc, KnowledgeImportResult, KnowledgePatch } from '../shared/knowledge'
 import type { AvailableUpdate } from '../shared/update'
 import type { AuthResult, LoginReasonPayload } from '../shared/auth'
+import type { AccountResult } from '../shared/account'
 import type { RemoteConfig } from '../shared/remote-config'
 
 // Custom APIs for renderer
@@ -23,6 +24,10 @@ const api = {
   authLogout: () => ipcRenderer.invoke('auth:logout'),
   authGetReason: () => ipcRenderer.invoke('auth:get-reason') as Promise<LoginReasonPayload | null>,
   authQuit: () => ipcRenderer.invoke('auth:quit'),
+  // 个人中心：账号信息（含剩余时长）与卡密充值
+  accountGetProfile: () => ipcRenderer.invoke('account:get-profile') as Promise<AccountResult>,
+  accountRedeem: (cardCode: string) =>
+    ipcRenderer.invoke('account:redeem', cardCode) as Promise<AccountResult>,
   onAuthReason: (callback: (payload: LoginReasonPayload) => void) => {
     ipcRenderer.on('auth:reason', (_event, payload: LoginReasonPayload) => callback(payload))
   },
