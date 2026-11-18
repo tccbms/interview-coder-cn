@@ -13,6 +13,30 @@ export function applyContentProtection(window: BrowserWindow, forceReset = false
   window.setContentProtection(true)
 }
 
+/**
+ * Chromium suspends its compositor when a window is truly hidden or minimized
+ * (backgroundThrottling only covers occlusion, not full invisibility). A window
+ * restored from such a state — Cmd+M to Dock, Cmd+H app-hide, Mission Control
+ * full-screen switch — often comes back with the compositor still sleeping,
+ * leaving the frameless transparent overlay painted at its last frame. Toggle
+ * the background color to force a repaint; cheap enough to call on every
+ * show/restore/focus and reliable across Electron versions.
+ */
+function kickCompositor(window: BrowserWindow): void {
+  if (!window || window.isDestroyed()) return
+  try {
+    const wc = window.webContents
+    const prev = wc.getBackgroundColor()
+    wc.setBackgroundColor('#00000000')
+    setImmediate(() => {
+      if (!window.isDestroyed()) wc.setBackgroundColor(prev)
+    })
+  } catch {
+    // Older Electron versions or certain platforms don't support
+    // getBackgroundColor; silently skip.
+  }
+}
+
 export function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -24,6 +48,13 @@ export function createWindow(): void {
     hasShadow: false,
     // Native resize toggling breaks transparency on Windows; renderer handles own resizing.
     resizable: false,
+    // The overlay is always-on-top and invisible to screen-sharing. Native minimize
+    // / hide freezes Chromium's compositor (backgroundThrottling only blocks timer
+    // throttling, not render suspension) and the frameless transparent window often
+    // cannot recover a fresh frame when restored — users report the window returning
+    // with content stuck on one static frame. Disable native minimize entirely and
+    // let Cmd+H / Cmd+M fall through to our soft-hide instead.
+    minimizable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     hiddenInMissionControl: true,
@@ -57,7 +88,37 @@ export function createWindow(): void {
     mainWindow.setTitle('')
   })
 
-  mainWindow.on('ready-to-show', () => {
+  // Prevent Cmd+M from doing anything — the above minimizable:false already
+  // stops window.minimize() on Electron's side, but catch this as a belt-and-
+  // suspenders guard against future Electron changes or platform quirks.
+  mainWindow.on('minimize', (event) => {
+    event.preventDefault()
+  })
+
+  // When the window becomes visible again (any path: soft-hide restore,
+  // workspace switch, Mission Control, focus return), Chromium's compositor
+  // may still be suspended from a prior minimize/hide. Force a repaint by
+  // toggling the background color — cheap enough to do on every show and
+  // reliably kick the compositor into producing fresh frames.
+  mainWindow.on('show', () => {
+    applyContentProtection(mainWindow)
+    kickCompositor(mainWindow)
+  })
+
+  // Restore is fired when a minimized window comes back; defensively cover it
+  // in case a future Electron or platform path bypasses minimizable:false.
+  mainWindow.on('restore', () => {
+    kickCompositor(mainWindow)
+  })
+
+  // Some apps (window managers, macOS Mission Control full-screen) briefly
+  // hide and re-show the window without going through show/restore — blur →
+  // focus is a reliable catch-all for that case.
+  mainWindow.on('focus', () => {
+    kickCompositor(mainWindow)
+  })
+
+  mainWindow.webContents.setWindowOpenHandler((details) => {
     mainWindow.show()
     mainWindow.setAlwaysOnTop(true, 'screen-saver', 1)
     mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
@@ -72,10 +133,6 @@ export function createWindow(): void {
         mainWindow.setAlwaysOnTop(true, 'screen-saver', 1)
       }
     })
-  })
-
-  mainWindow.on('show', () => {
-    applyContentProtection(mainWindow)
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
