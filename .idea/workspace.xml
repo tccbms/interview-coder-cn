@@ -4,50 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1359ae34-a724-47d6-a7bb-2545e9ef2079" name="更改" comment="增加充值联系功能">
-      <change afterPath="$PROJECT_DIR$/src/main/account.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/auth-device.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/auth.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/billing.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/http.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/login-window.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/remote-config.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/renderer/src/assets/activation-bg.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/renderer/src/auth/index.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/renderer/src/components/BillingExhaustedBanner.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/renderer/src/settings/sections/AccountSection.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/shared/account.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/shared/auth.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/shared/billing.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/shared/remote-config.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/electron-builder.yml" beforeDir="false" afterPath="$PROJECT_DIR$/electron-builder.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/auto-updater.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/auto-updater.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/conversation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/conversation.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/index.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/index.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/main-window.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/main-window.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/shortcuts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/shortcuts.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/transcription.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/transcription.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/preload/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/preload/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/src/coder/AppHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/coder/AppHeader.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/src/conversation/ConversationStatusBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/conversation/ConversationStatusBar.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/src/conversation/HintPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/conversation/HintPanel.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/src/help/FAQ.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/help/FAQ.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/src/help/UpdateNotice.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/help/UpdateNotice.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/src/help/components/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/help/components/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/src/help/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/help/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/src/lib/store/app.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/lib/store/app.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/src/lib/store/settings.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/lib/store/settings.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/src/lib/utils/duration.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/lib/utils/duration.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/src/main.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/main.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/src/settings/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/settings/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/shared/conversation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/shared/conversation.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/shared/update.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/shared/update.ts" afterDir="false" />
-    </list>
+    <list default="true" id="1359ae34-a724-47d6-a7bb-2545e9ef2079" name="更改" comment="把二开功能迁移到最新版本" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -145,7 +102,7 @@
       <workItem from="1795080220635" duration="927000" />
       <workItem from="1795091403164" duration="697000" />
       <workItem from="1795097714193" duration="2274000" />
-      <workItem from="1795103246916" duration="2329000" />
+      <workItem from="1795103246916" duration="2700000" />
     </task>
     <task id="LOCAL-00001" summary="对话模式增加追问问题功能">
       <option name="closed" value="true" />
@@ -227,7 +184,15 @@
       <option name="project" value="LOCAL" />
       <updated>1795103870148</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="把二开功能迁移到最新版本">
+      <option name="closed" value="true" />
+      <created>1795109140597</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1795109140597</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -259,7 +224,8 @@
     <MESSAGE value="增加计费扣费功能" />
     <MESSAGE value="增加剩余时长不足弹窗提示引导充值功能" />
     <MESSAGE value="增加充值联系功能" />
-    <option name="LAST_COMMIT_MESSAGE" value="增加充值联系功能" />
+    <MESSAGE value="把二开功能迁移到最新版本" />
+    <option name="LAST_COMMIT_MESSAGE" value="把二开功能迁移到最新版本" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
