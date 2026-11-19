@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1359ae34-a724-47d6-a7bb-2545e9ef2079" name="更改" comment="增加剩余时长不足弹窗提示引导充值功能">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/src/lib/store/app.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/lib/store/app.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/renderer/src/settings/sections/AccountSection.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/settings/sections/AccountSection.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/shared/remote-config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/shared/remote-config.ts" afterDir="false" />
-    </list>
+    <list default="true" id="1359ae34-a724-47d6-a7bb-2545e9ef2079" name="更改" comment="增加充值联系功能" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -107,6 +102,7 @@
       <workItem from="1795080220635" duration="927000" />
       <workItem from="1795091403164" duration="697000" />
       <workItem from="1795097714193" duration="2274000" />
+      <workItem from="1795103246916" duration="322000" />
     </task>
     <task id="LOCAL-00001" summary="对话模式增加追问问题功能">
       <option name="closed" value="true" />
@@ -172,7 +168,15 @@
       <option name="project" value="LOCAL" />
       <updated>1795099944920</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="增加充值联系功能">
+      <option name="closed" value="true" />
+      <created>1795103320352</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1795103320352</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -203,7 +207,8 @@
     <MESSAGE value="提交技术方案文档" />
     <MESSAGE value="增加计费扣费功能" />
     <MESSAGE value="增加剩余时长不足弹窗提示引导充值功能" />
-    <option name="LAST_COMMIT_MESSAGE" value="增加剩余时长不足弹窗提示引导充值功能" />
+    <MESSAGE value="增加充值联系功能" />
+    <option name="LAST_COMMIT_MESSAGE" value="增加充值联系功能" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
