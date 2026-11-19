@@ -4,6 +4,7 @@ import type { AccountProfile } from '../shared/account'
 import { getDeviceId } from './auth-device'
 import { getAccessToken } from './auth'
 import { postForm } from './http'
+import { refreshBalance } from './billing'
 
 /** 个人中心：查询账号信息（含剩余时长）与卡密充值 */
 
@@ -76,8 +77,9 @@ ipcMain.handle(
     if (!result.ok) {
       return { ok: false, message: result.message }
     }
-    // 充值成功后重新拉余额，以服务端为准
+    // 充值成功后重新拉余额，以服务端为准；同步刷新计费模块的顶栏余额
     const profile = await fetchProfile()
+    void refreshBalance()
     return { ok: true, message: result.message || '充值成功', profile }
   }
 )

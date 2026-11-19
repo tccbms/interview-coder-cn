@@ -2,6 +2,7 @@ import { toast } from 'sonner'
 import { useSettingsStore } from '@/lib/store/settings'
 import { useTranscriptionStore } from '@/lib/store/transcription'
 import { useConversationStore } from '@/lib/store/conversation'
+import { useAppStore } from '@/lib/store/app'
 import { describeCaptureError, startAudioCapture, stopAudioCapture } from '@/lib/audio-capture'
 
 /**
@@ -15,6 +16,11 @@ export async function startListening(): Promise<void> {
   const { setErrorMessage } = useConversationStore.getState()
   if (!dashscopeApiKey) {
     setErrorMessage('请先在「设置 → 语音」填写百炼平台 API Key，才能识别对方说话')
+    return
+  }
+  // 计费门禁：余额耗尽时不启动识别（主进程也会再校验一次）
+  if (useAppStore.getState().billing.exhausted) {
+    toast.error('剩余时长不足，请充值后再使用')
     return
   }
   try {
@@ -34,7 +40,8 @@ export async function startListening(): Promise<void> {
 
 export async function stopListening(): Promise<void> {
   stopAudioCapture()
-  await window.api.stopTranscription()
+  // 用户主动停止监听 → 主进程停止识别并结束计费会话（切模式/离页的停止不经过这里）
+  await window.api.stopConversationListening()
   useTranscriptionStore.getState().setIsTranscribing(false)
 }
 

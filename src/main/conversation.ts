@@ -4,7 +4,13 @@ import { getHintStream } from './ai'
 import { settings, getModeProfile, onSettingsChanged } from './settings'
 import { saveConversation, saveConversationSync } from './save-conversation'
 import { consumeStream, extractErrorMessage } from './stream'
-import { isTranscriptionRunning, onConversationSentence, onTranscriptionEnd } from './transcription'
+import {
+  isTranscriptionRunning,
+  onConversationSentence,
+  onTranscriptionEnd,
+  stopTranscription
+} from './transcription'
+import { endSession, ensureSessionStarted, getSessionGateMessage, notifyActivity } from './billing'
 import {
   countMeaningfulChars,
   type ConversationSnapshot,
@@ -151,6 +157,8 @@ function handleSentence(text: string, final: boolean) {
     if (waiting) void startHint(waiting, waiting.fromId, waiting.toId, 'auto')
     return
   }
+  // 收到对方说话 → 计费会话活跃，重置 300s 空闲计时
+  notifyActivity()
   publishUtterance(utterance)
 
   if (final) onSentenceFinished(utterance)
@@ -257,6 +265,16 @@ async function startHint(
   previous?: string,
   question?: string
 ): Promise<void> {
+  // 计费门禁：余额耗尽 / 会话失效时不再生成提示。
+  // 必须把卡片置为错误并发布，否则新手势创建的卡片会一直停在 streaming
+  if (!(await ensureSessionStarted())) {
+    card.status = 'error'
+    card.error = getSessionGateMessage() || '余额不足，请充值'
+    publishHint(card)
+    return
+  }
+  // 生成提示也是使用行为 → 重置计费空闲计时
+  notifyActivity()
   stopStream(card.id)
   Object.assign(card, {
     fromId,
@@ -443,3 +461,9 @@ ipcMain.handle('conversation:request-hint', () => requestHint())
 ipcMain.handle('conversation:follow-up', (_event, question: string) => requestFollowUp(question))
 ipcMain.handle('conversation:stop-hints', () => stopHints())
 ipcMain.handle('conversation:clear', () => clearConversation())
+ipcMain.handle('conversation:stop-listening', async () => {
+  // 用户主动停止对话监听 → 结束计费会话。
+  // 切模式 / 离页导致的停止走普通 stop-transcription，不结束会话（FR-9：切换模式不结束会话）。
+  stopTranscription()
+  await endSession('user')
+})

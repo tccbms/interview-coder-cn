@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import WebSocket from 'ws'
 import { randomUUID } from 'node:crypto'
+import { ensureSessionStarted } from './billing'
 
 const WS_URL = 'wss://dashscope.aliyuncs.com/api-ws/v1/inference/'
 
@@ -69,8 +70,13 @@ function cleanup() {
   taskStarted = false
 }
 
-function startTranscription(apiKey: string, options: TranscriptionOptions = {}) {
+async function startTranscription(apiKey: string, options: TranscriptionOptions = {}) {
   if (isTranscribing) return
+
+  if ((options.purpose ?? 'screenshot') === 'conversation') {
+    // 计费门禁：余额不足不启动识别（ensureSessionStarted 已广播提示）
+    if (!(await ensureSessionStarted())) return
+  }
 
   cleanup()
   isTranscribing = true
@@ -179,7 +185,7 @@ function startTranscription(apiKey: string, options: TranscriptionOptions = {}) 
   })
 }
 
-function stopTranscription() {
+export function stopTranscription() {
   if (!isTranscribing) return
 
   if (ws && ws.readyState === WebSocket.OPEN && taskId && taskStarted) {

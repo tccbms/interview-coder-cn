@@ -21,6 +21,7 @@ import { getTranscriptionText, clearTranscriptionText } from './transcription'
 import { consumeStream, extractErrorMessage, isImageInputRefused } from './stream'
 import type { StreamChunk } from './stream'
 import { requestHint, stopHints, clearConversation } from './conversation'
+import { ensureSessionStarted, getSessionGateMessage, notifyActivity } from './billing'
 
 type Shortcut = {
   action: string
@@ -489,6 +490,16 @@ const callbacks: Record<string, () => void> = {
     if (!mainWindow || mainWindow.isDestroyed() || !state.inCoderPage) return
     if (!screenshotProfileReady(mainWindow)) return
 
+    // 计费门禁：无会话则开启；余额不足 / 网络异常时不截图、不计费
+    if (!(await ensureSessionStarted())) {
+      mainWindow.webContents.send(
+        'solution-error',
+        getSessionGateMessage() || '剩余时长不足，请检查网络或充值后再试'
+      )
+      return
+    }
+    notifyActivity()
+
     abortCurrentStream('new-request')
     // Timing covers the whole wait the user experiences: capture + request + render
     startTiming()
@@ -554,6 +565,16 @@ const callbacks: Record<string, () => void> = {
       callbacks.takeScreenshot()
       return
     }
+
+    // 追加截图复用当前会话：确保会话存活并重置空闲计时
+    if (!(await ensureSessionStarted())) {
+      mainWindow.webContents.send(
+        'solution-error',
+        getSessionGateMessage() || '剩余时长不足，请检查网络或充值后再试'
+      )
+      return
+    }
+    notifyActivity()
 
     abortCurrentStream('new-request')
     startTiming()
@@ -879,6 +900,16 @@ ipcMain.handle('sendFollowUpQuestion', async (_event, question: string) => {
   if (conversationMessages.length === 0) {
     return { success: false, error: 'No active conversation' }
   }
+
+  // 计费门禁：余额耗尽时不继续追问
+  if (!(await ensureSessionStarted())) {
+    mainWindow.webContents.send(
+      'solution-error',
+      getSessionGateMessage() || '余额不足，请充值'
+    )
+    return { success: false, error: 'Insufficient balance' }
+  }
+  notifyActivity()
 
   startTiming()
   const streamContext = beginStream()

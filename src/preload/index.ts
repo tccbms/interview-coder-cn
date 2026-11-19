@@ -13,6 +13,7 @@ import type { AvailableUpdate } from '../shared/update'
 import type { AuthResult, LoginReasonPayload } from '../shared/auth'
 import type { AccountResult } from '../shared/account'
 import type { RemoteConfig } from '../shared/remote-config'
+import type { BillingNotice, BillingState } from '../shared/billing'
 
 // Custom APIs for renderer
 const api = {
@@ -33,6 +34,28 @@ const api = {
   },
   removeAuthReasonListener: () => {
     ipcRenderer.removeAllListeners('auth:reason')
+  },
+  // 计时计费：主进程维护会话状态，渲染层订阅快照与一次性提示
+  getBillingState: () => ipcRenderer.invoke('billing:get-state') as Promise<BillingState>,
+  refreshBilling: () => ipcRenderer.invoke('billing:refresh') as Promise<BillingState>,
+  onBillingUpdate: (callback: (state: BillingState) => void) => {
+    ipcRenderer.on('billing:update', (_event, state: BillingState) => callback(state))
+  },
+  removeBillingUpdateListener: () => {
+    ipcRenderer.removeAllListeners('billing:update')
+  },
+  onBillingNotice: (callback: (notice: BillingNotice) => void) => {
+    ipcRenderer.on('billing:notice', (_event, notice: BillingNotice) => callback(notice))
+  },
+  removeBillingNoticeListener: () => {
+    ipcRenderer.removeAllListeners('billing:notice')
+  },
+  // 余额用完：渲染层据此停止正在进行的生成/识别，并跳到个人中心充值
+  onBillingRechargeRequired: (callback: () => void) => {
+    ipcRenderer.on('billing:recharge-required', () => callback())
+  },
+  removeBillingRechargeRequiredListener: () => {
+    ipcRenderer.removeAllListeners('billing:recharge-required')
   },
   // The endpoint keys, speech key and latest version the config API returned
   getRemoteConfig: () => ipcRenderer.invoke('get-remote-config') as Promise<RemoteConfig | null>,
@@ -399,6 +422,8 @@ const api = {
   startTranscription: (apiKey: string, options?: TranscriptionOptions) =>
     ipcRenderer.invoke('start-transcription', apiKey, options),
   stopTranscription: () => ipcRenderer.invoke('stop-transcription'),
+  // 对话模式：用户主动停止监听（停止识别 + 结束计费会话）；切模式/离页的停止用上面的 stopTranscription
+  stopConversationListening: () => ipcRenderer.invoke('conversation:stop-listening'),
   sendTranscriptionAudioChunk: (chunk: ArrayBuffer) =>
     ipcRenderer.send('transcription-audio-chunk', chunk),
   getTranscriptionText: () => ipcRenderer.invoke('get-transcription-text') as Promise<string>,

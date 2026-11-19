@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { AvailableUpdate } from '../../../../shared/update'
+import type { BillingState } from '../../../../shared/billing'
 
 interface AppState {
   ignoreMouse: boolean
@@ -18,11 +19,25 @@ interface AppStore extends AppState {
   toggleIgnoreMouse: () => void
   /** Adopt what main reports; it sends its whole state, of which these are the fields used here */
   syncAppState: (state: AppState) => void
+  /** 计时计费运行时状态，由主进程广播同步（不持久化） */
+  billing: BillingState
+  setBilling: (billing: BillingState) => void
+  /** 余额用完的请求序号；变化时页面停止功能并跳到个人中心 */
+  rechargeRequiredAt: number
+  requireRecharge: () => void
 }
 
 const defaultState: AppState = {
   ignoreMouse: false,
   inConversationPage: false
+}
+
+const defaultBilling: BillingState = {
+  sessionActive: false,
+  remainingSeconds: 0,
+  exhausted: false,
+  sessionSeconds: 0,
+  lastBilledSeconds: 0
 }
 
 export const useAppStore = create<AppStore>()((set) => ({
@@ -43,5 +58,13 @@ export const useAppStore = create<AppStore>()((set) => ({
   },
   syncAppState: (state) => {
     set({ ignoreMouse: state.ignoreMouse, inConversationPage: state.inConversationPage })
+  },
+  billing: defaultBilling,
+  setBilling: (billing) => {
+    set({ billing })
+  },
+  rechargeRequiredAt: 0,
+  requireRecharge: () => {
+    set({ rechargeRequiredAt: Date.now() })
   }
 }))

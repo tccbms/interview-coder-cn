@@ -10,6 +10,7 @@ import { initAutoUpdater } from './auto-updater'
 import { fetchRemoteConfig } from './remote-config'
 import { closeLoginWindow, createLoginWindow } from './login-window'
 import { hideToolbar } from './toolbar-window'
+import { endSessionForLogout, refreshBalance, resetBillingState } from './billing'
 
 /**
  * 账号密码登录（第一版简化）：
@@ -149,12 +150,18 @@ ipcMain.handle(
       account: typeof data.account === 'string' ? data.account : account.trim()
     })
     console.log('[auth] login success')
+    // 登出已 resetBillingState 清空旧用户状态，这里为新登录用户种子余额与耗尽标志
+    void refreshBalance()
     await enterMainWindow()
     return { ok: true, message: 'success' }
   }
 )
 
 ipcMain.handle('auth:logout', async () => {
+  // 先结束计费会话（失败也不阻塞登出），再清 token 回登录页
+  await endSessionForLogout()
+  // 清空旧用户的运行时计费状态，避免余额/耗尽标志残留到下一次登录
+  resetBillingState()
   const token = getAccessToken()
   if (token) {
     const deviceId = await getDeviceId()

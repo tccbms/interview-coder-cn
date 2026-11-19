@@ -6,6 +6,7 @@ import { useSolutionStore, type ReasoningRound, type RoundUi } from '@/lib/store
 import { cn } from '@/lib/utils'
 import MarkdownRenderer from '@/components/MarkdownRenderer'
 import ShortcutRenderer from '@/components/ShortcutRenderer'
+import { BillingExhaustedBanner } from '@/components/BillingExhaustedBanner'
 
 const SCROLL_OFFSET = 120
 
@@ -226,6 +227,7 @@ export function AppContent() {
 
   return (
     <div id="app-content" className="px-6 py-4">
+      <BillingExhaustedBanner />
       {/* Error Banner */}
       {errorMessage && (
         <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg flex items-start gap-3">

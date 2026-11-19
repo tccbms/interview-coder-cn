@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { HashRouter, Routes, Route, useLocation } from 'react-router'
+import { HashRouter, Routes, Route, useLocation, useNavigate } from 'react-router'
 import { Toaster, toast } from 'sonner'
 import CoderPage from '@/coder'
 import ConversationPage from '@/conversation'
@@ -10,6 +10,8 @@ import { OverlayToolbar } from '@/coder/OverlayToolbar'
 import { useSettingsStore } from '@/lib/store/settings'
 import { useShortcutsStore } from '@/lib/store/shortcuts'
 import { useAppStore } from '@/lib/store/app'
+import { useTranscriptionStore } from '@/lib/store/transcription'
+import { stopListening } from '@/conversation/listening'
 import { getCloneableFields } from '@/lib/utils'
 import { applyTheme } from '@/lib/theme'
 import { WindowResizeHandles } from '@/components/WindowResizeHandles'
@@ -100,6 +102,28 @@ export default function App() {
     return () => window.api.removeUpdateStatusListener()
   }, [])
 
+  // 计时计费：主进程广播会话状态与一次性提示，渲染层同步到 store
+  useEffect(() => {
+    const { setBilling } = useAppStore.getState()
+    window.api.getBillingState().then(setBilling)
+    // 主动拉一次最新余额：登出重置后重新登录、或网页充值后重进主窗口，
+    // 确保顶栏展示与本地门禁状态为当前用户的真实值（无 token 时 main 侧 no-op）
+    void window.api.refreshBilling()
+    window.api.onBillingUpdate(setBilling)
+    window.api.onBillingNotice((notice) => {
+      if (notice.kind === 'error') toast.error(notice.message)
+      else if (notice.kind === 'warn') toast.warning(notice.message)
+      else toast(notice.message)
+    })
+    // 余额用完：停止功能并跳到个人中心充值（在路由内的控制器里执行）
+    window.api.onBillingRechargeRequired(() => useAppStore.getState().requireRecharge())
+    return () => {
+      window.api.removeBillingUpdateListener()
+      window.api.removeBillingNoticeListener()
+      window.api.removeBillingRechargeRequiredListener()
+    }
+  }, [])
+
   useEffect(() => {
     // 登录页不注册全局快捷键：登录期间无需快捷键，且避免干扰其他应用。
     // 用 window.location.hash 判断，不能调 useLocation()——App 组件创建 <HashRouter>，
@@ -114,6 +138,7 @@ export default function App() {
       <HashRouter>
         <ToolbarVisibilityController />
         <WindowResizeController />
+        <BillingRechargeController />
         <Routes>
           <Route index element={<CoderPage />} />
           <Route path="conversation" element={<ConversationPage />} />
@@ -148,6 +173,29 @@ function ToolbarVisibilityController() {
     const onModePage = Object.values(MODE_PATHS).includes(location.pathname)
     void window.api.setToolbarVisible(onModePage && showOverlayToolbar)
   }, [location.pathname, showOverlayToolbar])
+
+  return null
+}
+
+/**
+ * 余额用完：停止正在进行的生成 / 语音识别，并跳到个人中心充值。
+ * 必须在 <HashRouter> 内才能 useNavigate。
+ */
+function BillingRechargeController() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const rechargeRequiredAt = useAppStore((state) => state.rechargeRequiredAt)
+
+  useEffect(() => {
+    if (!rechargeRequiredAt) return
+    if (location.pathname === '/toolbar' || location.pathname === '/login') return
+    // 正在生成答案 / 识别语音：立即停止，避免继续消耗
+    window.api.stopSolutionStream()
+    if (useTranscriptionStore.getState().isTranscribing) void stopListening()
+    navigate('/settings?tab=account')
+    // 只在余额用完时跳转一次，路由变化不应重复触发
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rechargeRequiredAt, navigate])
 
   return null
 }

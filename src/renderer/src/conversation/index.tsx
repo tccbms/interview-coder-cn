@@ -7,6 +7,7 @@ import { stopAudioCapture } from '@/lib/audio-capture'
 import { useModePage } from '@/lib/use-mode-page'
 import { AppHeader } from '@/coder/AppHeader'
 import { PrerequisitesChecker } from '@/coder/PrerequisitesChecker'
+import { BillingExhaustedBanner } from '@/components/BillingExhaustedBanner'
 import { TranscriptPanel } from './TranscriptPanel'
 import { HintPanel } from './HintPanel'
 import { ConversationStatusBar } from './ConversationStatusBar'
@@ -26,6 +27,9 @@ export default function ConversationPage() {
   return (
     <div className="conversation-page flex h-screen flex-col">
       <AppHeader mode="conversation" />
+      <div className="px-4 pt-2">
+        <BillingExhaustedBanner />
+      </div>
       <div className="flex min-h-0 flex-1 max-[560px]:flex-col">
         {!transcriptHidden && <TranscriptPanel />}
         <HintPanel />

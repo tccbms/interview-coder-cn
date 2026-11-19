@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Camera, HelpCircle, MessagesSquare, SettingsIcon, X } from 'lucide-react'
+import { Camera, Clock, HelpCircle, MessagesSquare, SettingsIcon, X } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/lib/store/app'
 import { useSettingsStore, type AppMode } from '@/lib/store/settings'
 import { useSolutionStore } from '@/lib/store/solution'
-import { formatDuration } from '@/lib/utils/duration'
+import { formatDuration, formatRemainingSeconds } from '@/lib/utils/duration'
 import { useElapsed } from '@/lib/use-elapsed'
 import { MODE_NAMES, MODE_PATHS } from '@/lib/use-mode-page'
 
@@ -17,7 +17,7 @@ const TITLES: Record<AppMode, string> = {
 
 export function AppHeader({ mode }: { mode: AppMode }) {
   const navigate = useNavigate()
-  const { ignoreMouse, update } = useAppStore()
+  const { ignoreMouse, update, billing } = useAppStore()
   // A shortcut or a toolbar hover can switch either unnoticed, so both stay in view
   const model = useSettingsStore((state) => {
     const id = mode === 'screenshot' ? state.screenshotProfileId : state.conversationProfileId
@@ -59,6 +59,21 @@ export function AppHeader({ mode }: { mode: AppMode }) {
           {formatDuration(elapsed)}
         </span>
       )}
+      {/* 剩余时长：两种模式都展示；余额低或耗尽变红，点击跳转个人中心充值 */}
+      <button
+        type="button"
+        title="剩余时长，点击前往充值"
+        className={cn(
+          'shrink-0 flex items-center gap-1 whitespace-nowrap pl-2 text-xs tabular-nums pointer-events-auto [-webkit-app-region:no-drag]',
+          billing.exhausted || billing.remainingSeconds <= 60
+            ? 'text-red-500'
+            : 'opacity-70 hover:opacity-100'
+        )}
+        onClick={() => navigate('/settings?tab=account')}
+      >
+        <Clock className="size-3" />
+        {formatRemainingSeconds(billing.remainingSeconds)}
+      </button>
       <div
         className="flex min-w-0 items-baseline justify-center gap-1.5 px-2"
         style={{ flex: '1 8 auto', minWidth: 0 }}
