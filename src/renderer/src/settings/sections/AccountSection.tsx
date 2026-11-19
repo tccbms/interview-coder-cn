@@ -48,6 +48,8 @@ export function AccountSection() {
         toast.success(result.message || '充值成功')
         setCardCode('')
         if (result.profile) setProfile(result.profile)
+        // 充值成功后主动刷新计费状态：reset exhausted + 让主进程重新 start 会话
+        void window.api.refreshBilling()
       } else {
         toast.error(result.message || '充值失败')
       }

@@ -36,6 +36,7 @@ let idleTimeoutMs = 300_000
 let heartbeatTimer: ReturnType<typeof setTimeout> | null = null
 let idleTimer: ReturnType<typeof setTimeout> | null = null
 let limitTimer: ReturnType<typeof setTimeout> | null = null // 余额用完的本地定时器
+let recoverTimer: ReturnType<typeof setTimeout> | null = null // exhausted 时后台轮询充值恢复
 let networkDownAt: number | null = null
 let retryAttempts = 0
 let ending = false // endSession 重入守卫
@@ -198,16 +199,43 @@ export async function refreshBalance(): Promise<void> {
   if (!token) return
   const seconds = await fetchProfileRemaining(token)
   if (seconds === null) return
-  if (sessionActive) {
-    broadcast()
-    return
-  }
   remainingSeconds = Math.max(0, seconds)
-  exhausted = remainingSeconds <= 0
+  remainingUpdatedAt = Date.now()
+  // 关键：余额恢复后自动解除 exhausted 状态，让下一次截图直接放行
+  if (remainingSeconds > 0) {
+    if (exhausted) {
+      console.log('[billing] refreshBalance: remaining recovered to', remainingSeconds, '→ clear exhausted')
+      exhausted = false
+      stopRecoverTimer()
+    }
+  } else {
+    exhausted = true
+    startRecoverTimer()
+  }
   broadcast()
 }
 
 // ---- 会话开始 ----
+
+/** exhausted 时后台轮询充值恢复，每 30s 查一次 profile */
+function startRecoverTimer(): void {
+  if (recoverTimer) return
+  recoverTimer = setTimeout(async function tick() {
+    recoverTimer = null
+    if (!exhausted) return // 已经被 refreshBalance 解了
+    console.log('[billing] recoverTimer tick: polling profile for recovery...')
+    await refreshBalance()
+    if (exhausted) startRecoverTimer()
+  }, 30_000)
+}
+
+function stopRecoverTimer(): void {
+  if (recoverTimer) {
+    clearTimeout(recoverTimer)
+    recoverTimer = null
+  }
+}
+
 function markExhausted(message: string): void {
   exhausted = true
   sessionActive = false
@@ -215,6 +243,7 @@ function markExhausted(message: string): void {
   remainingSeconds = 0
   clearTimers()
   lastGateMessage = message
+  startRecoverTimer()
   emitRechargeRequired()
   broadcast()
 }

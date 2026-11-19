@@ -136,10 +136,19 @@ export default function App() {
       else toast(notice.message)
     })
     window.api.onBillingRechargeRequired(() => useAppStore.getState().requireRecharge())
+    // 窗口重新可见/聚焦时主动刷新余额——用户可能刚在浏览器充值
+    const onRevisible = () => {
+      if (!document.hidden) void window.api.refreshBilling()
+    }
+    const onFocus = () => void window.api.refreshBilling()
+    document.addEventListener('visibilitychange', onRevisible)
+    window.addEventListener('focus', onFocus)
     return () => {
       window.api.removeBillingUpdateListener()
       window.api.removeBillingNoticeListener()
       window.api.removeBillingRechargeRequiredListener()
+      document.removeEventListener('visibilitychange', onRevisible)
+      window.removeEventListener('focus', onFocus)
     }
   }, [])
 
