@@ -4,14 +4,14 @@ import {
   ArrowLeft,
   Bot,
   Camera,
-  HelpCircle,
+  Globe,
   Keyboard,
   LibraryBig,
   MessagesSquare,
   Mic,
-  Network,
   Palette,
   Smartphone,
+  UserRound,
   type LucideIcon
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -26,18 +26,19 @@ import { ShortcutsSection } from './sections/ShortcutsSection'
 import { ScreenshotSection } from './sections/ScreenshotSection'
 import { ConversationSection } from './sections/ConversationSection'
 import { KnowledgeSection } from './sections/KnowledgeSection'
+import { AccountSection } from './sections/AccountSection'
 import { MobileSection } from './sections/MobileSection'
 import { NetworkSection } from './sections/NetworkSection'
-import { ScrollPanel } from '@/components/ScrollPanel'
 
 type Tab =
+  | 'account'
   | 'ai'
-  | 'network'
   | 'knowledge'
+  | 'network'
   | 'voice'
   | 'appearance'
-  | 'mobile'
   | 'shortcuts'
+  | 'mobile'
   | 'screenshot'
   | 'conversation'
 
@@ -49,12 +50,13 @@ const NAV: { heading: string; items: { tab: Tab; label: string; Icon: LucideIcon
   {
     heading: '通用',
     items: [
+      { tab: 'account', label: '个人中心', Icon: UserRound },
       { tab: 'ai', label: 'AI 模型', Icon: Bot },
-      { tab: 'network', label: '网络代理', Icon: Network },
       { tab: 'knowledge', label: '资料库', Icon: LibraryBig },
+      { tab: 'network', label: '网络', Icon: Globe },
       { tab: 'voice', label: '语音', Icon: Mic },
-      { tab: 'appearance', label: '界面与隐私', Icon: Palette },
       { tab: 'mobile', label: '手机同步', Icon: Smartphone },
+      { tab: 'appearance', label: '界面与隐私', Icon: Palette },
       { tab: 'shortcuts', label: '快捷键', Icon: Keyboard }
     ]
   },
@@ -116,12 +118,13 @@ export default function SettingsPage() {
   }, [])
 
   const sections: Record<Tab, ReactNode> = {
+    account: <AccountSection />,
     ai: <AiModelsSection />,
-    network: <NetworkSection />,
     knowledge: <KnowledgeSection />,
+    network: <NetworkSection />,
     voice: <VoiceSection />,
-    appearance: <AppearanceSection />,
     mobile: <MobileSection />,
+    appearance: <AppearanceSection />,
     shortcuts: <ShortcutsSection />,
     screenshot: (
       <ScreenshotSection onEditProfile={editProfile} onOpenKnowledge={() => openTab('knowledge')} />
@@ -151,53 +154,32 @@ export default function SettingsPage() {
 
       {/* The page itself never scrolls: the nav stays put, the content scrolls */}
       <div id="app-content" className="flex" style={{ overflow: 'hidden' }}>
-        <ScrollPanel
-          className="w-36 shrink-0 border-r border-black/10 max-[640px]:w-12"
-          contentClassName="p-2"
-        >
-          <nav className="flex flex-col gap-0.5">
-            {NAV.map((group) => (
-              <div key={group.heading} className="flex flex-col gap-0.5">
-                <div className="px-3 pt-3 pb-1 text-xs opacity-60 select-none max-[640px]:hidden">
-                  {group.heading}
-                </div>
-                {group.items.map(({ tab: itemTab, label, Icon }) => (
-                  <button
-                    key={itemTab}
-                    aria-label={label}
-                    className={cn(
-                      'flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors cursor-pointer select-none max-[640px]:justify-center max-[640px]:px-0',
-                      itemTab === tab ? 'bg-gray-300/80 font-medium' : 'hover:bg-gray-300/40'
-                    )}
-                    onClick={() => openTab(itemTab)}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    <span className="truncate max-[640px]:hidden">{label}</span>
-                  </button>
-                ))}
+        <nav className="flex w-36 shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-black/10 p-2 max-[640px]:w-12">
+          {NAV.map((group) => (
+            <div key={group.heading} className="flex flex-col gap-0.5">
+              <div className="px-3 pt-3 pb-1 text-xs opacity-60 select-none max-[640px]:hidden">
+                {group.heading}
               </div>
-            ))}
-            <div className="mt-2 border-t border-black/10 pt-2">
-              {/* The help page's own way in, for when the title bar's button is hidden */}
-              <Link
-                to="/help"
-                state={{ from: `/settings?tab=${tab}` }}
-                aria-label="帮助"
-                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors select-none hover:bg-gray-300/40 max-[640px]:justify-center max-[640px]:px-0"
-              >
-                <HelpCircle className="h-4 w-4 shrink-0" />
-                <span className="truncate max-[640px]:hidden">帮助</span>
-              </Link>
+              {group.items.map(({ tab: itemTab, label, Icon }) => (
+                <button
+                  key={itemTab}
+                  aria-label={label}
+                  className={cn(
+                    'flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors cursor-pointer select-none max-[640px]:justify-center max-[640px]:px-0',
+                    itemTab === tab ? 'bg-gray-300/80 font-medium' : 'hover:bg-gray-300/40'
+                  )}
+                  onClick={() => openTab(itemTab)}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="truncate max-[640px]:hidden">{label}</span>
+                </button>
+              ))}
             </div>
-          </nav>
-        </ScrollPanel>
-        <ScrollPanel
-          viewportRef={contentRef}
-          className="min-w-0 flex-1"
-          contentClassName="flex flex-col gap-4 p-3"
-        >
+          ))}
+        </nav>
+        <div ref={contentRef} className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-3">
           {sections[tab]}
-        </ScrollPanel>
+        </div>
       </div>
     </>
   )

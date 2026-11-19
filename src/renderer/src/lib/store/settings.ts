@@ -35,6 +35,7 @@ import {
   type ToolbarActionName,
   type ToolbarButtons
 } from '../../../../shared/toolbar'
+import type { RemoteConfig } from '../../../../shared/remote-config'
 
 export type { Theme }
 export type { ApiProfile }
@@ -402,6 +403,8 @@ interface SettingsStore extends Settings {
    * is lost the moment the user switches profiles or restarts.
    */
   updateCredential: (patch: Partial<Pick<ApiProfile, (typeof CREDENTIAL_KEYS)[number]>>) => void
+  /** 从远程配置下发 AI endpoint/key，同时同步到当前三种 profile 引用 */
+  applyRemoteConfig: (config: RemoteConfig) => void
   addCustomModel: (baseURL: string, model: string) => void
   removeCustomModel: (baseURL: string, model: string) => void
   /** Step the window opacity within [OPACITY_MIN, OPACITY_MAX] */
@@ -741,6 +744,35 @@ export const useSettingsStore = create<SettingsStore>()(
           ])
         )
         if (Object.keys(credentials).length > 0) get().updateCredential(credentials)
+      },
+      applyRemoteConfig: (config) => {
+        set((state) => {
+          // Both modes and the profile being edited send requests with
+          // whatever profile they point at, so each of those takes the new
+          // endpoint and key; their own model choice is left alone
+          const patch: Partial<Omit<ApiProfile, 'id'>> = {}
+          if (config.aiUrl) patch.apiBaseURL = config.aiUrl
+          if (config.aiKey) patch.apiKey = config.aiKey
+          const ids = new Set(
+            [state.activeProfileId, state.screenshotProfileId, state.conversationProfileId].filter(
+              Boolean
+            )
+          )
+          const apiProfiles =
+            Object.keys(patch).length > 0
+              ? state.apiProfiles.map((profile) =>
+                  ids.has(profile.id) ? { ...profile, ...patch } : profile
+                )
+              : state.apiProfiles
+          return {
+            apiProfiles,
+            // The flat fields mirror the active profile, which is patched above
+            ...(config.aiUrl ? { apiBaseURL: config.aiUrl } : {}),
+            ...(config.aiKey ? { apiKey: config.aiKey } : {}),
+            ...(config.audioKey ? { dashscopeApiKey: config.audioKey } : {}),
+            hasConfiguredApi: state.hasConfiguredApi || !!config.aiKey
+          }
+        })
       },
       setActiveScene: (id) => {
         set((state) => {

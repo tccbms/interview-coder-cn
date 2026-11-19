@@ -38,14 +38,17 @@ import './proxy-ipc'
 import './external-knowledge-ipc'
 import './mobile-sync'
 import './tray'
-import { createWindow } from './main-window'
-import { initAutoUpdater } from './auto-updater'
+import './auth'
+import './account'
+import './billing'
 import { applyDockVisibility } from './settings'
+import { enterMainWindow, validateStoredToken } from './auth'
+import { createLoginWindow } from './login-window'
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
@@ -68,7 +71,7 @@ app.whenReady().then(() => {
       })
       .then((sources) => {
         // null refuses the request: getDisplayMedia rejects with an AbortError
-        callback(sources.length > 0 ? { video: sources[0], audio: 'loopback' } : null)
+        callback(sources.length > 0 ? ({ video: sources[0], audio: 'loopback' } as any) : (null as any))
       })
   })
 
@@ -94,15 +97,22 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  createWindow()
-
-  // Configure auto-updater
-  initAutoUpdater()
+  // 启动校验：本地 token + /api/account/profile。
+  // 通过 → 拉远程配置并创建主窗口；未登录 / 失效 / 网络失败 → 登录页。
+  // 主窗口初始 show:false（ready-to-show 才 show），校验期间用户看不到主界面，无闪屏。
+  const outcome = await validateStoredToken()
+  if (outcome.ok) {
+    await enterMainWindow()
+  } else {
+    createLoginWindow(outcome.reason, outcome.message)
+  }
 
   // Clicking the Dock icon brings back a window hidden with the shortcut
   app.on('activate', function () {
     if (global.mainWindow && !global.mainWindow.isDestroyed()) {
       revealMainWindow(global.mainWindow)
+    } else if (!outcome.ok) {
+      createLoginWindow('none', '')
     }
   })
 })

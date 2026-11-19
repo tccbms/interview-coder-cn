@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Camera, HelpCircle, MessagesSquare, Minus, SettingsIcon, X } from 'lucide-react'
+import { Camera, Clock, HelpCircle, MessagesSquare, Minus, SettingsIcon, X } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/lib/store/app'
 import { useSettingsStore, type AppMode } from '@/lib/store/settings'
+import { formatRemainingSeconds } from '@/lib/utils/duration'
 import { MODE_NAMES, MODE_PATHS } from '@/lib/use-mode-page'
 
 const TITLES: Record<AppMode, string> = {
@@ -14,7 +15,7 @@ const TITLES: Record<AppMode, string> = {
 
 export function AppHeader({ mode }: { mode: AppMode }) {
   const navigate = useNavigate()
-  const { ignoreMouse, update } = useAppStore()
+  const { ignoreMouse, update, billing } = useAppStore()
   // A shortcut or a toolbar hover can switch either unnoticed, so both stay in view
   const model = useSettingsStore((state) => {
     const id = mode === 'screenshot' ? state.screenshotProfileId : state.conversationProfileId
@@ -28,6 +29,8 @@ export function AppHeader({ mode }: { mode: AppMode }) {
   const hideHelp = useSettingsStore((state) => state.hideHeaderHelp)
   const hideQuit = useSettingsStore((state) => state.hideHeaderQuit)
   const [appVersion, setAppVersion] = useState('')
+  // 剩余不足 10 分钟或已耗尽：用绿色徽标提醒充值
+  const lowBalance = billing.exhausted || billing.remainingSeconds <= 600
 
   useEffect(() => {
     window.api.getAppVersion().then(setAppVersion)
@@ -39,14 +42,30 @@ export function AppHeader({ mode }: { mode: AppMode }) {
         Flex shrink decides what survives a narrow window. The higher the
         factor, the sooner that item is squeezed, and it disappears once it
         reaches `min-width: 0`:
+          badge    shrink-0        never compressed — critical info
           title    flex: 0 8 auto  compressed first, being the least informative
           context  flex: 0 4 auto  next (scene · model); still in the settings page
           switch   shrink-0        never compressed — it is how the page is changed
         The two `ml-auto` (switch, context) split the free space between them,
         centering the switch between the title and the context.
-        Only the title gives way, not the version or the badge after it: as a
-        `minmax(0, auto)` column it adds nothing to the group's minimum width.
       */}
+      {/* 剩余时长：两种模式都展示；余额低于 10 分钟或耗尽时用绿色徽标提醒，点击跳转个人中心充值 */}
+      <button
+        type="button"
+        title="剩余时长，点击前往充值"
+        className={cn(
+          'shrink-0 flex items-center gap-1 whitespace-nowrap text-xs tabular-nums pointer-events-auto [-webkit-app-region:no-drag]',
+          lowBalance
+            ? 'ml-2 rounded bg-emerald-600 px-2 py-0.5 font-medium text-white hover:bg-emerald-500'
+            : 'pl-2 opacity-70 hover:opacity-100'
+        )}
+        onClick={() => navigate('/settings?tab=account')}
+      >
+        <Clock className="size-3" />
+        {lowBalance
+          ? `剩余 ${formatRemainingSeconds(billing.remainingSeconds)} 请充值`
+          : formatRemainingSeconds(billing.remainingSeconds)}
+      </button>
       <div
         className="grid grid-flow-col grid-cols-[minmax(0,auto)] items-baseline gap-1.5 whitespace-nowrap pl-3"
         style={{ flex: '0 8 auto' }}

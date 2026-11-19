@@ -45,6 +45,7 @@ import {
 import { consumeStream, extractErrorMessage, isImageInputRefused } from './stream'
 import type { StreamChunk } from './stream'
 import { requestHint, stopHints, clearConversation } from './conversation'
+import { ensureSessionStarted, getSessionGateMessage, notifyActivity } from './billing'
 import {
   hasMobileViewers,
   markMobileDirty,
@@ -911,6 +912,16 @@ const callbacks: Record<string, () => void> = {
     if (!mainWindow || mainWindow.isDestroyed() || !state.inCoderPage) return
     if (!screenshotProfileReady(mainWindow)) return
 
+    // 计费门禁
+    if (!(await ensureSessionStarted())) {
+      mainWindow.webContents.send(
+        'solution-error',
+        getSessionGateMessage() || '剩余时长不足，请检查网络或充值后再试'
+      )
+      return
+    }
+    notifyActivity()
+
     abortCurrentStream('new-request')
     // Timing covers the whole wait the user experiences: capture + request + render
     startTiming()
@@ -934,6 +945,16 @@ const callbacks: Record<string, () => void> = {
     const mainWindow = global.mainWindow
     if (!mainWindow || mainWindow.isDestroyed() || !state.inCoderPage) return
     if (!screenshotProfileReady(mainWindow)) return
+
+    // 计费门禁：无会话则开启；余额不足 / 网络异常时不截图、不计费
+    if (!(await ensureSessionStarted())) {
+      mainWindow.webContents.send(
+        'solution-error',
+        getSessionGateMessage() || '剩余时长不足，请检查网络或充值后再试'
+      )
+      return
+    }
+    notifyActivity()
 
     const picked = await whilePicking(mainWindow, () =>
       pickScreenshot({ askFirst: settings.snipMode === 'ask' })
@@ -959,6 +980,16 @@ const callbacks: Record<string, () => void> = {
     const mainWindow = global.mainWindow
     if (!mainWindow || mainWindow.isDestroyed() || !state.inCoderPage) return
     if (!screenshotProfileReady(mainWindow)) return
+
+    // 计费门禁
+    if (!(await ensureSessionStarted())) {
+      mainWindow.webContents.send(
+        'solution-error',
+        getSessionGateMessage() || '剩余时长不足，请检查网络或充值后再试'
+      )
+      return
+    }
+    notifyActivity()
 
     // Fallback to first screenshot if no conversation
     if (conversationMessages.length === 0) {
@@ -988,6 +1019,16 @@ const callbacks: Record<string, () => void> = {
     const mainWindow = global.mainWindow
     if (!mainWindow || mainWindow.isDestroyed() || !state.inCoderPage) return
     if (!screenshotProfileReady(mainWindow)) return
+
+    // 追加截图复用当前会话：确保会话存活并重置空闲计时
+    if (!(await ensureSessionStarted())) {
+      mainWindow.webContents.send(
+        'solution-error',
+        getSessionGateMessage() || '剩余时长不足，请检查网络或充值后再试'
+      )
+      return
+    }
+    notifyActivity()
 
     // Nothing to append to: start one, like `appendScreenshot` does
     if (conversationMessages.length === 0) {
@@ -1083,9 +1124,20 @@ const callbacks: Record<string, () => void> = {
 
   moveMainWindowRight: () => moveMainWindowBy(MOVE_STEP, 0),
 
-  toggleTranscription: () => {
+  toggleTranscription: async () => {
     const mainWindow = global.mainWindow
     if (!mainWindow || mainWindow.isDestroyed() || !inModePage()) return
+    // 对话模式开始监听前先校验会话（主门禁在 transcription.ts handler）
+    if (state.inConversationPage) {
+      if (!(await ensureSessionStarted())) {
+        mainWindow.webContents.send(
+          'transcription-error',
+          getSessionGateMessage() || '余额不足，请充值'
+        )
+        return
+      }
+      notifyActivity()
+    }
     mainWindow.webContents.send('toggle-transcription')
   },
 
@@ -1103,8 +1155,13 @@ const callbacks: Record<string, () => void> = {
   },
 
   // 对话模式: a hint now, whatever the automatic mode is waiting for
-  generateHint: () => {
-    if (state.inConversationPage) requestHint()
+  generateHint: async () => {
+    if (state.inConversationPage) {
+      // 对话模式也需要计费门禁
+      if (!(await ensureSessionStarted())) return
+      notifyActivity()
+      requestHint()
+    }
   },
 
   // 对话模式: the renderer owns the setting, main reads it back on the next sentence
@@ -1381,12 +1438,23 @@ ipcMain.handle('pickCaptureRegion', () => pickRegion())
  * question; an empty one sends it as 框选识别 would have. An answer still
  * streaming is replaced only now, as at the end of a pick without Shift
  */
-ipcMain.handle('sendSnipQuestion', (_event, question: string) => {
+ipcMain.handle('sendSnipQuestion', async (_event, question: string) => {
   const mainWindow = global.mainWindow
   const pending = pendingSnip
   if (!mainWindow || mainWindow.isDestroyed() || !pending || !state.inCoderPage) return
   setPendingSnip(null)
   if (!screenshotProfileReady(mainWindow)) return
+
+  // 计费门禁
+  if (!(await ensureSessionStarted())) {
+    mainWindow.webContents.send(
+      'solution-error',
+      getSessionGateMessage() || '剩余时长不足，请检查网络或充值后再试'
+    )
+    return
+  }
+  notifyActivity()
+
   startTiming()
   // A screenshot still being captured from before the question was sent loses to this one
   screenshotRequestId++
@@ -1415,6 +1483,16 @@ ipcMain.handle('sendFollowUpQuestion', async (_event, question: string) => {
   if (conversationMessages.length === 0) {
     return { success: false, error: 'No active conversation' }
   }
+
+  // 计费门禁：余额耗尽时不继续追问
+  if (!(await ensureSessionStarted())) {
+    mainWindow.webContents.send(
+      'solution-error',
+      getSessionGateMessage() || '余额不足，请充值'
+    )
+    return { success: false, error: 'Insufficient balance' }
+  }
+  notifyActivity()
 
   startTiming()
   const streamContext = beginStream()

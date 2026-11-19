@@ -9,9 +9,11 @@ import {
   onConversationSentence,
   onTranscriptionEnd,
   onTranscriptionError,
-  onTranscriptionStart
+  onTranscriptionStart,
+  stopTranscription
 } from './transcription'
 import { markMobileDirty, registerMobileSource } from './mobile-sync'
+import { endSession, ensureSessionStarted, getSessionGateMessage, notifyActivity } from './billing'
 import {
   countMeaningfulChars,
   looksLikeQuestion,
@@ -517,7 +519,8 @@ function buildMessages(
   fromId: number,
   toId: number,
   previous?: string,
-  early = false
+  early = false,
+  question?: string
 ): ModelMessage[] {
   const context: string[] = []
   let chars = 0
@@ -560,6 +563,11 @@ function buildMessages(
   if (previous?.trim()) {
     parts.push(`【上一版提示】\n${previous}\n\n请换一个角度重新给出提示，不要重复上一版。`)
   }
+  if (question?.trim()) {
+    parts.push(
+      `【我的追问】\n${question}\n\n这是用户本人的追问，请直接回答这个问题（无需回应规则不适用）。`
+    )
+  }
   return [{ role: 'user', content: parts.join('\n\n') }]
 }
 
@@ -584,8 +592,19 @@ async function startHint(
   toId: number,
   source: HintCard['source'],
   previous?: string,
-  early = false
+  early = false,
+  question?: string
 ): Promise<void> {
+  // 计费门禁：余额耗尽 / 会话失效时不再生成提示。
+  // 必须把卡片置为错误并发布，否则新手势创建的卡片会一直停在 streaming
+  if (!(await ensureSessionStarted())) {
+    card.status = 'error'
+    card.error = getSessionGateMessage() || '余额不足，请充值'
+    publishHint(card)
+    return
+  }
+  // 生成提示也是使用行为 → 重置计费空闲计时
+  notifyActivity()
   stopStream(card.id)
   earlyStarts.delete(card.id)
   const last = utterances.find((u) => u.id === toId)
@@ -617,7 +636,7 @@ async function startHint(
   const stream: HintStream = { controller: new AbortController(), startedAt: Date.now() }
   streams.set(card.id, stream)
   lastRequestAt = stream.startedAt
-  const messages = buildMessages(fromId, toId, previous, early)
+  const messages = buildMessages(fromId, toId, previous, early, question)
   const query = hintQuery(fromId, toId)
   const outcome = await consumeStream(
     (signal) => getHintStream(messages, signal, query),
@@ -679,6 +698,29 @@ export function requestHint(): void {
     return
   }
   send('conversation-notice', '还没有识别到对方说话')
+}
+
+/**
+ * The user's own follow-up question, answered on top of the conversation so
+ * far. One-shot: the question and its answer are not sent back with later
+ * hints (see the plan in the module comment).
+ */
+export function requestFollowUp(question: string): void {
+  const trimmed = question.trim()
+  if (!trimmed) return
+  const latest = utterances.at(-1)
+  const card: HintCard = {
+    id: nextHintId++,
+    fromId: hintedUpTo + 1,
+    toId: latest?.id ?? 0,
+    source: 'follow-up',
+    status: 'streaming',
+    text: '',
+    reasoning: '',
+    question: trimmed
+  }
+  hints.push(card)
+  void startHint(card, card.fromId, card.toId, 'follow-up', undefined, false, trimmed)
 }
 
 /** Stop every hint being written, and give up on the withdrawn ones */
@@ -794,5 +836,12 @@ app.on('will-quit', () => {
 
 ipcMain.handle('conversation:get-snapshot', () => getSnapshot())
 ipcMain.handle('conversation:request-hint', () => requestHint())
+ipcMain.handle('conversation:follow-up', (_event, question: string) => requestFollowUp(question))
 ipcMain.handle('conversation:stop-hints', () => stopHints())
 ipcMain.handle('conversation:clear', () => clearConversation())
+ipcMain.handle('conversation:stop-listening', async () => {
+  // 用户主动停止对话监听 → 结束计费会话。
+  // 切模式 / 离页导致的停止走普通 stop-transcription，不结束会话。
+  stopTranscription()
+  await endSession('user')
+})

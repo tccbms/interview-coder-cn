@@ -1,9 +1,9 @@
-import { Download, ExternalLink, LoaderCircle, RotateCw } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store/app'
-import type { AvailableUpdate } from '../../../shared/update'
+import { isMac } from '@/lib/utils/env'
 
-/** A newer release: installed in place on Windows, downloaded from its page on macOS */
+/** A newer release the check API announced: the app only points to its download page */
 export function UpdateNotice() {
   const update = useAppStore((state) => state.update)
   if (!update) return null
@@ -22,71 +22,18 @@ export function UpdateNotice() {
             查看更新内容
           </a>
         </h3>
-        <p className="text-sm break-words text-gray-700">{describe(update)}</p>
-        <p className="text-sm break-words text-amber-900">
-          新版本可能改变隐身效果，升级后需要依赖隐身模式时，请先重新实际测试一遍。
+        <p className="text-sm break-words text-gray-700">
+          {isMac
+            ? '到发布页下载 dmg，把应用拖入「应用程序」替换旧版即可，设置和资料都会保留。替换后如果截图或语音不能用，到「系统设置 → 隐私与安全性 → 屏幕与系统音频录制」里删掉本应用，再重新添加。'
+            : '到发布页下载安装包，运行后覆盖安装即可，设置和资料都会保留。'}
         </p>
       </div>
-      <UpdateAction update={update} />
-    </div>
-  )
-}
-
-function describe(update: AvailableUpdate): string {
-  if (!update.installable) {
-    return '到发布页下载 dmg，把应用拖入「应用程序」替换旧版即可，设置和资料都会保留。替换后如果截图或语音不能用，到「系统设置 → 隐私与安全性 → 屏幕与系统音频录制」里删掉本应用，再重新添加。'
-  }
-  switch (update.phase) {
-    case 'available':
-      return '下载完成后重启即可安装，设置和资料都会保留。'
-    case 'downloading':
-      return `正在下载… ${update.percent ?? 0}%`
-    case 'downloaded':
-      return '已下载完成，重启后安装；也可以稍后再装，退出应用时会自动安装。'
-    case 'failed':
-      return `下载失败：${update.error ?? '未知错误'}。可以重试，或到发布页手动下载安装包。`
-  }
-}
-
-function UpdateAction({ update }: { update: AvailableUpdate }) {
-  if (!update.installable) {
-    return (
       <Button asChild size="sm">
         <a href={update.url} target="_blank" rel="noreferrer">
           <ExternalLink />
           前往下载
         </a>
       </Button>
-    )
-  }
-  switch (update.phase) {
-    case 'available':
-      return (
-        <Button size="sm" onClick={() => window.api.downloadUpdate()}>
-          <Download />
-          下载更新
-        </Button>
-      )
-    case 'downloading':
-      return (
-        <Button size="sm" disabled>
-          <LoaderCircle className="animate-spin" />
-          下载中
-        </Button>
-      )
-    case 'downloaded':
-      return (
-        <Button size="sm" onClick={() => window.api.installUpdate()}>
-          <RotateCw />
-          重启并安装
-        </Button>
-      )
-    case 'failed':
-      return (
-        <Button size="sm" onClick={() => window.api.downloadUpdate()}>
-          <Download />
-          重试
-        </Button>
-      )
-  }
+    </div>
+  )
 }

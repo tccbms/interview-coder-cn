@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { HashRouter, Routes, Route, useLocation, useNavigate } from 'react-router'
 import { Toaster, toast } from 'sonner'
 import CoderPage from '@/coder'
 import ConversationPage from '@/conversation'
 import SettingsPage from '@/settings'
 import HelpPage from '@/help'
+import LoginPage from '@/auth'
 import { OverlayToolbar } from '@/coder/OverlayToolbar'
 import { useSettingsStore } from '@/lib/store/settings'
 import { useShortcutsStore } from '@/lib/store/shortcuts'
@@ -15,6 +16,16 @@ import { WindowResizeHandles } from '@/components/WindowResizeHandles'
 import { MODE_PATHS } from '@/lib/use-mode-page'
 import { stopAudioCapture } from '@/lib/audio-capture'
 import { useTranscriptionStore } from '@/lib/store/transcription'
+import { stopListening } from '@/conversation/listening'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
 
 export default function App() {
   const [initialized, setInitialized] = useState(false)
@@ -38,22 +49,31 @@ export default function App() {
   }, [theme])
 
   useEffect(() => {
-    window.api.getAppSettings().then((settings) => {
-      // Main starts with stealth on; a persisted "off" must win over that default.
-      const blankFields = Object.keys(settings).filter(
-        (key) => key !== 'stealthEnabled' && settings[key] && !settingsStore[key]
-      )
-      settingsStore.syncSettings(
-        blankFields.reduce(
-          (acc, key) => {
-            acc[key] = settings[key]
-            return acc
-          },
-          {} as Partial<typeof settingsStore>
+    Promise.all([window.api.getAppSettings(), window.api.getRemoteConfig()]).then(
+      ([settings, remoteConfig]) => {
+        // Main starts with stealth on; a persisted "off" must win over that default.
+        const blankFields = Object.keys(settings).filter(
+          (key) => key !== 'stealthEnabled' && settings[key] && !settingsStore[key]
         )
-      )
-      setInitialized(true)
-    })
+        settingsStore.syncSettings(
+          blankFields.reduce(
+            (acc, key) => {
+              acc[key] = settings[key]
+              return acc
+            },
+            {} as Partial<typeof settingsStore>
+          )
+        )
+        // The check API's endpoints and keys win over whatever was saved
+        // locally; they go in after the sync above so it cannot undo them
+        if (remoteConfig) {
+          useSettingsStore.getState().applyRemoteConfig(remoteConfig)
+          useAppStore.getState().setDownloadUrl(remoteConfig.downloadUrl || null)
+          useAppStore.getState().setRechargeUrl(remoteConfig.rechargeUrl || null)
+        }
+        setInitialized(true)
+      }
+    )
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -93,12 +113,42 @@ export default function App() {
     return () => window.api.removeUpdateStatusListener()
   }, [])
 
+  // Reaching the app through the login page fetches the configuration
+  // after the window is up, and main pushes it then
   useEffect(() => {
-    console.log('App initShortcuts:', shortcuts) // DEBUG: 检查新键
-    window.api.initShortcuts(shortcuts)
-    window.api.getShortcuts().then((shortcutsStatus) => {
-      console.log('Shortcuts registered:', shortcutsStatus) // DEBUG: 主进程状态
+    window.api.onRemoteConfig((remoteConfig) => {
+      useSettingsStore.getState().applyRemoteConfig(remoteConfig)
+      useAppStore.getState().setDownloadUrl(remoteConfig.downloadUrl || null)
+      useAppStore.getState().setRechargeUrl(remoteConfig.rechargeUrl || null)
     })
+    return () => window.api.removeRemoteConfigListener()
+  }, [])
+
+  // 计时计费：主进程广播会话状态与一次性提示，渲染层同步到 store
+  useEffect(() => {
+    const { setBilling } = useAppStore.getState()
+    window.api.getBillingState().then(setBilling)
+    void window.api.refreshBilling()
+    window.api.onBillingUpdate(setBilling)
+    window.api.onBillingNotice((notice) => {
+      if (notice.kind === 'error') toast.error(notice.message)
+      else if (notice.kind === 'warn') toast.warning(notice.message)
+      else toast(notice.message)
+    })
+    window.api.onBillingRechargeRequired(() => useAppStore.getState().requireRecharge())
+    return () => {
+      window.api.removeBillingUpdateListener()
+      window.api.removeBillingNoticeListener()
+      window.api.removeBillingRechargeRequiredListener()
+    }
+  }, [])
+
+  useEffect(() => {
+    // 登录页不注册全局快捷键：登录期间无需快捷键，且避免干扰其他应用。
+    // 用 window.location.hash 判断，不能调 useLocation()——App 组件创建 <HashRouter>，
+    // 自身在 Router context 之外，调用 useLocation 会抛错导致白屏。
+    if (window.location.hash === '#/login') return
+    window.api.initShortcuts(shortcuts)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -108,11 +158,13 @@ export default function App() {
         <WindowResizeController />
         <OpenSettingsController />
         <MiniBarController />
+        <BillingRechargeController />
         <Routes>
           <Route index element={<CoderPage />} />
           <Route path="conversation" element={<ConversationPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="help" element={<HelpPage />} />
+          <Route path="login" element={<LoginPage />} />
           <Route path="toolbar" element={<OverlayToolbar />} />
         </Routes>
         {/* After the routes: effects run in tree order, so the page tells main
@@ -174,4 +226,61 @@ function ToolbarVisibilityController() {
   }, [location.pathname, showOverlayToolbar])
 
   return null
+}
+
+/**
+ * 余额用完：停止正在进行的生成 / 语音识别，弹窗提示并跳到个人中心充值。
+ * 必须在 <HashRouter> 内才能 useNavigate。
+ */
+function BillingRechargeController() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const rechargeRequiredAt = useAppStore((state) => state.rechargeRequiredAt)
+  const exhausted = useAppStore((state) => state.billing.exhausted)
+  const [open, setOpen] = useState(false)
+  const wasExhausted = useRef(false)
+
+  const showRecharge = useCallback(() => {
+    if (location.pathname === '/toolbar' || location.pathname === '/login') return
+    // 正在生成答案 / 识别语音：立即停止，避免继续消耗
+    window.api.stopSolutionStream()
+    if (useTranscriptionStore.getState().isTranscribing) void stopListening()
+    setOpen(true)
+  }, [location.pathname])
+
+  const goRecharge = useCallback(() => {
+    setOpen(false)
+    navigate('/settings?tab=account')
+  }, [navigate])
+
+  // 主动拦截（截图 / 追问 / 提示被门禁挡下）时立即提示
+  useEffect(() => {
+    if (!rechargeRequiredAt) return
+    showRecharge()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rechargeRequiredAt])
+
+  // 余额在后台变为 0（本地倒计时 / 心跳）时也要弹窗
+  useEffect(() => {
+    if (exhausted && !wasExhausted.current) showRecharge()
+    wasExhausted.current = exhausted
+    if (!exhausted) setOpen(false)
+  }, [exhausted, showRecharge])
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>余额不足，请充值</DialogTitle>
+          <DialogDescription>剩余时长已用完，请充值后继续使用截图解题与对话提示。</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            稍后再说
+          </Button>
+          <Button onClick={goRecharge}>去充值</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }

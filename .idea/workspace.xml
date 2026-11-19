@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="1359ae34-a724-47d6-a7bb-2545e9ef2079" name="更改" comment="增加充值联系功能">
+      <change afterPath="$PROJECT_DIR$/src/main/account.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/auth-device.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/auth.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/billing.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/http.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/login-window.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/remote-config.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/renderer/src/assets/activation-bg.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/renderer/src/auth/index.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/renderer/src/components/BillingExhaustedBanner.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/renderer/src/settings/sections/AccountSection.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/shared/account.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/shared/auth.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/shared/billing.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/shared/remote-config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/electron-builder.yml" beforeDir="false" afterPath="$PROJECT_DIR$/electron-builder.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/auto-updater.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/auto-updater.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/conversation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/conversation.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/index.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/index.d.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/main-window.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/main-window.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/shortcuts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/shortcuts.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/transcription.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/transcription.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/preload/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/preload/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/src/coder/AppHeader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/coder/AppHeader.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/src/conversation/ConversationStatusBar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/conversation/ConversationStatusBar.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/src/conversation/HintPanel.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/conversation/HintPanel.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/src/help/FAQ.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/help/FAQ.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/src/help/UpdateNotice.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/help/UpdateNotice.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/src/help/components/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/help/components/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/src/help/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/help/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/src/lib/store/app.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/lib/store/app.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/src/lib/store/settings.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/lib/store/settings.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/src/lib/utils/duration.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/lib/utils/duration.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/src/main.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/main.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/renderer/src/settings/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/renderer/src/settings/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/shared/conversation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/shared/conversation.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/shared/update.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/shared/update.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ComposerSettings">
+    <execution />
+  </component>
+  <component name="Git.Settings">
+    <option name="PUSH_TAGS">
+      <GitPushTagMode>
+        <option name="argument" value="--follow-tags" />
+        <option name="title" value="Current Branch" />
+      </GitPushTagMode>
+    </option>
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
+  <component name="ProjectId" id="3KbHilXUE0Tk9hdr0pF1Rys5bQg" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.go.formatter.settings.were.checked": "true",
+    "RunOnceActivity.go.migrated.go.modules.settings": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "feat/migrate",
+    "go.import.settings.migrated": "true",
+    "last_opened_file_path": "/Users/hetaiyi/Desktop/my/tech/web/interview-coder-cn",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "configurable.group.appearance",
+    "ts.external.directory.path": "/Applications/IntelliJ IDEA.app/Contents/plugins/javascript-impl/jsLanguageServicesImpl/external",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="interview-coder-cn" />
+      <working_directory value="$PROJECT_DIR$" />
+      <go_parameters value="-i" />
+      <kind value="FILE" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="interview-coder-cn" />
+      <working_directory value="$PROJECT_DIR$" />
+      <go_parameters value="-i" />
+      <kind value="DIRECTORY" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="应用程序级" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="1359ae34-a724-47d6-a7bb-2545e9ef2079" name="更改" comment="" />
+      <created>1791819477587</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1791819477587</updated>
+      <workItem from="1791819480394" duration="4000" />
+      <workItem from="1791819497771" duration="657000" />
+      <workItem from="1791820161062" duration="24000" />
+      <workItem from="1791820201686" duration="3928000" />
+      <workItem from="1791855550996" duration="737000" />
+      <workItem from="1791859668902" duration="1397000" />
+      <workItem from="1791861438675" duration="1427000" />
+      <workItem from="1791919001724" duration="1000" />
+      <workItem from="1794924978077" duration="2295000" />
+      <workItem from="1794939320645" duration="523000" />
+      <workItem from="1794946722421" duration="420000" />
+      <workItem from="1794992531050" duration="15000" />
+      <workItem from="1795080220635" duration="927000" />
+      <workItem from="1795091403164" duration="697000" />
+      <workItem from="1795097714193" duration="2274000" />
+      <workItem from="1795103246916" duration="2329000" />
+    </task>
+    <task id="LOCAL-00001" summary="对话模式增加追问问题功能">
+      <option name="closed" value="true" />
+      <created>1791854115609</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1791854115610</updated>
+    </task>
+    <task id="LOCAL-00002" summary="增加激活码功能">
+      <option name="closed" value="true" />
+      <created>1791863538662</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1791863538663</updated>
+    </task>
+    <task id="LOCAL-00003" summary="增加激活码功能">
+      <option name="closed" value="true" />
+      <created>1794925213159</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1794925213159</updated>
+    </task>
+    <task id="LOCAL-00004" summary="增加登录功能">
+      <option name="closed" value="true" />
+      <created>1794939351513</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1794939351513</updated>
+    </task>
+    <task id="LOCAL-00005" summary="增加个人中心和卡密充值功能">
+      <option name="closed" value="true" />
+      <created>1794946766549</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1794946766549</updated>
+    </task>
+    <task id="LOCAL-00006" summary="提交技术方案文档">
+      <option name="closed" value="true" />
+      <created>1795091450535</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1795091450537</updated>
+    </task>
+    <task id="LOCAL-00007" summary="增加计费扣费功能">
+      <option name="closed" value="true" />
+      <created>1795097802985</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1795097802985</updated>
+    </task>
+    <task id="LOCAL-00008" summary="增加剩余时长不足弹窗提示引导充值功能">
+      <option name="closed" value="true" />
+      <created>1795099944920</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1795099944920</updated>
+    </task>
+    <task id="LOCAL-00009" summary="增加充值联系功能">
+      <option name="closed" value="true" />
+      <created>1795103320352</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1795103320352</updated>
+    </task>
+    <task id="LOCAL-00010" summary="增加充值联系功能">
+      <option name="closed" value="true" />
+      <created>1795103870148</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1795103870148</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+    <option name="exactExcludedFiles">
+      <list>
+        <option value="$PROJECT_DIR$/src/preload/index.d.ts" />
+        <option value="$PROJECT_DIR$/src/main/index.d.ts" />
+      </list>
+    </option>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="对话模式增加追问问题功能" />
+    <MESSAGE value="增加激活码功能" />
+    <MESSAGE value="增加登录功能" />
+    <MESSAGE value="增加个人中心和卡密充值功能" />
+    <MESSAGE value="提交技术方案文档" />
+    <MESSAGE value="增加计费扣费功能" />
+    <MESSAGE value="增加剩余时长不足弹窗提示引导充值功能" />
+    <MESSAGE value="增加充值联系功能" />
+    <option name="LAST_COMMIT_MESSAGE" value="增加充值联系功能" />
+  </component>
+  <component name="VgoProject">
+    <settings-migrated>true</settings-migrated>
+  </component>
+</project>

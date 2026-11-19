@@ -6,6 +6,28 @@ import { applyContentProtection, registerStealthWindow } from './window-privacy'
 import { isMainWindowShown, syncShortcuts, watchMainWindowFocus } from './shortcuts'
 import { attachMiniBar } from './mini-bar-window'
 
+/**
+ * Chromium suspends its compositor when a window is truly hidden or minimized
+ * (backgroundThrottling only covers occlusion, not full invisibility). A window
+ * restored from such a state — Cmd+M to Dock, Cmd+H app-hide, Mission Control
+ * full-screen switch — often comes back with the compositor still sleeping,
+ * leaving the frameless transparent overlay painted at its last frame. Ask the
+ * web contents for a full repaint instead; cheap enough to call on every
+ * show/restore/focus and reliable across Electron versions.
+ *
+ * Never toggle backgroundColor here: the window is created without one (it
+ * relies on transparent: true), and getBackgroundColor() reports opaque white
+ * (#FFFFFFFF) in that case — restoring it would make the overlay permanently opaque.
+ */
+function kickCompositor(window: BrowserWindow): void {
+  if (!window || window.isDestroyed()) return
+  try {
+    window.webContents.invalidate()
+  } catch {
+    // Silently skip if the web contents is gone or the API is unavailable.
+  }
+}
+
 export function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -78,6 +100,20 @@ export function createWindow(): void {
 
   mainWindow.on('show', () => {
     applyContentProtection(mainWindow)
+    kickCompositor(mainWindow)
+  })
+
+  // Restore fires when a minimized window comes back; defensively cover it
+  // in case a future Electron or platform path bypasses show.
+  mainWindow.on('restore', () => {
+    kickCompositor(mainWindow)
+  })
+
+  // Some apps (window managers, macOS Mission Control full-screen) briefly
+  // hide and re-show the window without going through show/restore — blur →
+  // focus is a reliable catch-all for that case.
+  mainWindow.on('focus', () => {
+    kickCompositor(mainWindow)
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

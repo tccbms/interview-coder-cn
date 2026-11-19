@@ -15,3 +15,16 @@ export function formatDuration(ms: number): string {
   const seconds = totalSeconds % 60
   return `${minutes}m${String(seconds).padStart(2, '0')}s`
 }
+
+/**
+ * 顶栏剩余时长：不足 1 小时显示 `mm:ss`，满 1 小时显示 `h:mm:ss`。
+ * 秒数始终补零，避免宽度跳动。
+ */
+export function formatRemainingSeconds(totalSeconds: number): string {
+  const s = Math.max(0, Math.floor(totalSeconds))
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = s % 60
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+  return `${m}:${String(sec).padStart(2, '0')}`
+}

@@ -2,6 +2,7 @@ import { ipcMain } from 'electron'
 import WebSocket from 'ws'
 import { randomUUID } from 'node:crypto'
 import type { AudioSource } from '../shared/conversation'
+import { ensureSessionStarted, getSessionGateMessage, notifyActivity } from './billing'
 
 const WS_URL = 'wss://dashscope.aliyuncs.com/api-ws/v1/inference/'
 export type TranscriptionPurpose = 'screenshot' | 'conversation'
@@ -257,7 +258,7 @@ async function startTranscription(apiKey: string, options: TranscriptionOptions 
     throw error
   }
 }
-function stopTranscription(): Promise<void> {
+export function stopTranscription(): Promise<void> {
   if (stopPromise) return stopPromise
   if (!sessions.size) return Promise.resolve()
   stopPromise = (async () => {
@@ -320,9 +321,15 @@ export function clearTranscriptionText() {
   accumulatedText = ''
   currentPartial = ''
 }
-ipcMain.handle('start-transcription', (_event, key: string, options?: TranscriptionOptions) =>
-  requestStart(key, options)
-)
+ipcMain.handle('start-transcription', async (_event, key: string, options?: TranscriptionOptions) => {
+  // 对话模式「开始监听」是 renderer 按钮直接调的，绕过 shortcuts 门禁，这里必须补
+  if (!(await ensureSessionStarted())) {
+    global.mainWindow?.webContents.send('transcription-error', getSessionGateMessage() || '余额不足，请充值')
+    return
+  }
+  notifyActivity()
+  return requestStart(key, options)
+})
 ipcMain.handle('stop-transcription', () => requestStop())
 ipcMain.on('transcription-audio-chunk', (_event, chunk: ArrayBuffer, source?: AudioSource) =>
   handleAudioChunk(chunk, source)

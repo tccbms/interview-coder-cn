@@ -1,6 +1,15 @@
-import { Lightbulb, Mic, MicOff, OctagonX, PointerOff } from 'lucide-react'
+import { useState } from 'react'
+import { Lightbulb, MessageCircle, Mic, MicOff, OctagonX, PointerOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import ShortcutRenderer from '@/components/ShortcutRenderer'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogTitle
+} from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
 import { useAppStore } from '@/lib/store/app'
 import { useSettingsStore, type HintMode } from '@/lib/store/settings'
 import { useShortcutsStore } from '@/lib/store/shortcuts'
@@ -23,6 +32,8 @@ export function ConversationStatusBar() {
   const streaming = useConversationStore((state) =>
     state.hints.some((h) => h.status === 'streaming' || h.status === 'waiting')
   )
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [questionInput, setQuestionInput] = useState('')
 
   const key = (action: string) =>
     !hideShortcutHints && (
@@ -31,6 +42,18 @@ export function ConversationStatusBar() {
         className="inline-block scale-75 border border-current bg-transparent px-1 py-0 text-xs"
       />
     )
+
+  const handleDialogClose = () => {
+    setIsDialogOpen(false)
+    setQuestionInput('')
+  }
+
+  const handleSubmitQuestion = () => {
+    const question = questionInput.trim()
+    if (!question) return
+    void window.api.sendConversationFollowUp(question)
+    handleDialogClose()
+  }
 
   // One line whatever the width: wrapped, the labels ran past the bar's fixed
   // height and the bottom of the window (#140). A window too narrow for them
@@ -83,6 +106,11 @@ export function ConversationStatusBar() {
         </button>
       )}
 
+      <button className="flex items-center gap-1 cursor-pointer" onClick={() => setIsDialogOpen(true)}>
+        <MessageCircle className="size-3.5" />
+        追问问题
+      </button>
+
       {ignoreMouse && (
         <span className="ml-auto flex min-w-0 items-center gap-1">
           <PointerOff className="size-3.5 shrink-0" />
@@ -90,6 +118,36 @@ export function ConversationStatusBar() {
           {key('ignoreOrEnableMouse')}
         </span>
       )}
+
+      {/* Follow-up Question Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTitle className="sr-only">追问</DialogTitle>
+        <DialogContent>
+          <div className="py-4">
+            <Textarea
+              placeholder="请输入追问内容，按 Ctrl/⌘+Enter 提交..."
+              value={questionInput}
+              className="min-h-24"
+              onChange={(e) => setQuestionInput(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault()
+                  handleSubmitQuestion()
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleDialogClose}>
+              取消
+            </Button>
+            <Button onClick={handleSubmitQuestion} disabled={!questionInput.trim()}>
+              提交
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

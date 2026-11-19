@@ -1,4 +1,23 @@
 import { LucideIcon } from 'lucide-react'
+import { useAppStore } from '@/lib/store/app'
+
+/** A link to the download page the check API announced; plain text without one */
+export function DownloadLink({
+  className,
+  children
+}: {
+  className?: string
+  children?: React.ReactNode
+}) {
+  const downloadUrl = useAppStore((state) => state.downloadUrl)
+  const label = children ?? '下载页面'
+  if (!downloadUrl) return <>{label}</>
+  return (
+    <a href={downloadUrl} target="_blank" rel="noreferrer" className={className}>
+      {label}
+    </a>
+  )
+}
 
 export function HelpSection({
   Icon,

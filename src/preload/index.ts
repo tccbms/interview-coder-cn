@@ -19,6 +19,10 @@ import type {
   ExternalKnowledgeSettings,
   ExternalKnowledgeTestResult
 } from '../shared/external-knowledge'
+import type { AuthResult, LoginReasonPayload } from '../shared/auth'
+import type { AccountResult } from '../shared/account'
+import type { RemoteConfig } from '../shared/remote-config'
+import type { BillingNotice, BillingState } from '../shared/billing'
 
 /** A 框选 screenshot waiting for the user's question; `append`: it joins the current conversation */
 export interface SnipQuestion {
@@ -32,7 +36,53 @@ import type { MiniBarState } from '../main/mini-bar-window'
 const api = {
   // Get the installed app version (package.json version at build time)
   getAppVersion: () => ipcRenderer.invoke('getAppVersion') as Promise<string>,
-  // A newer release main found (null: none); Windows downloads and installs it on request
+  // 账号密码登录 + 启动 token 校验：HTTP 请求在主进程，渲染层通过 IPC 调用
+  authLogin: (account: string, password: string) =>
+    ipcRenderer.invoke('auth:login', account, password) as Promise<AuthResult>,
+  authLogout: () => ipcRenderer.invoke('auth:logout'),
+  authGetReason: () => ipcRenderer.invoke('auth:get-reason') as Promise<LoginReasonPayload | null>,
+  authQuit: () => ipcRenderer.invoke('auth:quit'),
+  // 个人中心：账号信息（含剩余时长）与卡密充值
+  accountGetProfile: () => ipcRenderer.invoke('account:get-profile') as Promise<AccountResult>,
+  accountRedeem: (cardCode: string) =>
+    ipcRenderer.invoke('account:redeem', cardCode) as Promise<AccountResult>,
+  onAuthReason: (callback: (payload: LoginReasonPayload) => void) => {
+    ipcRenderer.on('auth:reason', (_event, payload: LoginReasonPayload) => callback(payload))
+  },
+  removeAuthReasonListener: () => {
+    ipcRenderer.removeAllListeners('auth:reason')
+  },
+  // 计时计费：主进程维护会话状态，渲染层订阅快照与一次性提示
+  getBillingState: () => ipcRenderer.invoke('billing:get-state') as Promise<BillingState>,
+  refreshBilling: () => ipcRenderer.invoke('billing:refresh') as Promise<BillingState>,
+  onBillingUpdate: (callback: (state: BillingState) => void) => {
+    ipcRenderer.on('billing:update', (_event, state: BillingState) => callback(state))
+  },
+  removeBillingUpdateListener: () => {
+    ipcRenderer.removeAllListeners('billing:update')
+  },
+  onBillingNotice: (callback: (notice: BillingNotice) => void) => {
+    ipcRenderer.on('billing:notice', (_event, notice: BillingNotice) => callback(notice))
+  },
+  removeBillingNoticeListener: () => {
+    ipcRenderer.removeAllListeners('billing:notice')
+  },
+  // 余额用完：渲染层据此停止正在进行的生成/识别，并跳到个人中心充值
+  onBillingRechargeRequired: (callback: () => void) => {
+    ipcRenderer.on('billing:recharge-required', () => callback())
+  },
+  removeBillingRechargeRequiredListener: () => {
+    ipcRenderer.removeAllListeners('billing:recharge-required')
+  },
+  // The endpoint keys, speech key and latest version the config API returned
+  getRemoteConfig: () => ipcRenderer.invoke('get-remote-config') as Promise<RemoteConfig | null>,
+  onRemoteConfig: (callback: (config: RemoteConfig) => void) => {
+    ipcRenderer.on('remote-config', (_event, config: RemoteConfig) => callback(config))
+  },
+  removeRemoteConfigListener: () => {
+    ipcRenderer.removeAllListeners('remote-config')
+  },
+  // A newer release the config API announced (null: none), with its download link
   getUpdateStatus: () => ipcRenderer.invoke('update:get-status') as Promise<AvailableUpdate | null>,
   downloadUpdate: () => ipcRenderer.invoke('update:download'),
   installUpdate: () => ipcRenderer.invoke('update:install'),
@@ -390,6 +440,9 @@ const api = {
   getConversationSnapshot: () =>
     ipcRenderer.invoke('conversation:get-snapshot') as Promise<ConversationSnapshot>,
   requestHint: () => ipcRenderer.invoke('conversation:request-hint'),
+  // The user's own follow-up question, answered as a follow-up card
+  sendConversationFollowUp: (question: string) =>
+    ipcRenderer.invoke('conversation:follow-up', question),
   stopHints: () => ipcRenderer.invoke('conversation:stop-hints'),
   clearConversation: () => ipcRenderer.invoke('conversation:clear'),
   onConversationUtterance: (callback: (utterance: Utterance) => void) => {
@@ -457,6 +510,8 @@ const api = {
       throw new Error(message.replace(/^Error invoking remote method '[^']*': (?:\w*Error: )?/, ''))
     }),
   stopTranscription: () => ipcRenderer.invoke('stop-transcription'),
+  // 对话模式：用户主动停止监听（停止识别 + 结束计费会话）；切模式/离页的停止用上面的 stopTranscription
+  stopConversationListening: () => ipcRenderer.invoke('conversation:stop-listening'),
   sendTranscriptionAudioChunk: (chunk: ArrayBuffer, source?: AudioSource) =>
     ipcRenderer.send('transcription-audio-chunk', chunk, source),
   getTranscriptionText: () => ipcRenderer.invoke('get-transcription-text') as Promise<string>,

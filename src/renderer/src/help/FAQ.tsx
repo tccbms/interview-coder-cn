@@ -1,7 +1,7 @@
 import { BookOpen } from 'lucide-react'
 import ShortcutRenderer from '@/components/ShortcutRenderer'
-import { isMac, platformAlt } from '@/lib/utils/env'
-import { HelpSection } from './components'
+import { platformAlt } from '@/lib/utils/env'
+import { HelpSection, DownloadLink } from './components'
 
 const faqs = [
   {
@@ -32,15 +32,7 @@ const faqs = [
         模型」里的三项和平台对不上：API Base URL 大多以 /v1 结尾，不要带上 /chat/completions；API
         Key
         要和地址属于同一个平台；模型名按平台文档一字不差地填，截图模式还要选能识图的模型。各种报错的原因和解决办法见{' '}
-        <a
-          href="https://github.com/ooboqoo/shiping/wiki/AI模型配置与调用失败"
-          target="_blank"
-          rel="noreferrer"
-          className="text-blue-600 hover:underline"
-        >
-          GitHub Wiki
-        </a>
-        。
+        <DownloadLink className="text-blue-600 hover:underline">下载页面</DownloadLink>。
       </span>
     )
   },
@@ -57,8 +49,7 @@ const faqs = [
     question: '只想截屏幕上的一块区域（比如题干）？',
     answer: (
       <span>
-        在「设置 → 截图模式 →
-        截图区域」中点「框选区域」，也可以点悬浮工具条上的「设置截图区域」按钮，或按下
+        在「设置 → 截图模式 → 截图区域」中点「框选区域」，也可以点悬浮工具条上的框选按钮，或按下
         <ShortcutRenderer shortcut={`${platformAlt}+Shift+R`} className="text-xs mx-1" />
         。在定格的屏幕画面上拖出要截的范围，按 Enter
         或双击确认。之后每次截图（包括追加截图）都只截这块区域，AI
@@ -68,70 +59,11 @@ const faqs = [
     )
   },
   {
-    question: '能像截图工具一样常驻后台，按快捷键随时框选识别吗？',
+    question: '分享屏幕时，对方能看到应用吗？',
     answer: (
       <span>
-        可以。按
-        <ShortcutRenderer shortcut={`${platformAlt}+H`} className="text-xs mx-1" />
-        隐藏窗口后应用仍在后台运行（macOS 还可以在「设置 → 界面与隐私」隐藏 Dock
-        图标）。隐藏期间只占用「隐藏/显示窗口」「框选识别」「框选追加截图」三个快捷键，其余快捷键交还给其他软件，窗口显示后自动恢复（打开了手机同步、有手机在看时，截图、翻页等也照常可用）。需要时按
-        <ShortcutRenderer
-          shortcut={isMac ? 'Alt+Shift+S' : 'CommandOrControl+Alt+S'}
-          className="text-xs mx-1"
-        />
-        ，或单击{isMac ? '屏幕顶部状态栏' : '任务栏右下角托盘'}
-        里的识屏图标，在定格的屏幕画面上拖出要识别的范围，松开鼠标就发给
-        AI，窗口随即显示出解答。看完按 Esc 即可隐藏窗口，键盘回到原来的应用（底部出现「Esc
-        隐藏窗口」提示时 Esc 才有效，切到别的应用后 Esc 不再作用于本工具）。题目还有下一部分时按
-        <ShortcutRenderer
-          shortcut={isMac ? 'Alt+Shift+A' : 'CommandOrControl+Alt+A'}
-          className="text-xs mx-1"
-        />
-        框选追加截图（右键图标的菜单里也有），框出的这块会接在当前对话后面一起解答。这样框选只截这一次，不改变「截图区域」设置。
-        想针对框出的这块提问，就按住 Shift
-        再松开鼠标（框选识别和框选追加截图都行）：截图先不发，窗口里出现输入框，写好问题按 Enter
-        和截图一起发给 AI，不填就直接发送；按 Esc
-        放弃这张截图并隐藏窗口，当前对话不受影响。习惯每次都先提问的，在「设置 → 截图模式 →
-        框选后」选「先输入问题」，松开鼠标就出输入框，按住 Shift
-        松开则直接发送。注意：输入法的候选框不属于本工具的窗口，共享屏幕时可能被看到，不想留痕迹可以开启语音转录，把问题说出来，转录的文字会随截图一起发送。
-      </span>
-    )
-  },
-  {
-    question: '分享屏幕时，对方能看到应用吗？怎么确认隐身有效？',
-    answer: (
-      <span className="block space-y-2">
-        <span className="block">
-          默认开启「隐身模式」，尽量让工具窗口不出现在截图、录屏和共享屏幕里，可在「设置 →
-          界面与隐私 → 隐身模式」中关闭。菜单栏 / 托盘图标不在隐身范围内。
-        </span>
-        <span className="block font-semibold text-amber-900">
-          识屏只提供隐身的能力，不保证它在你的环境里一定有效，需要依赖它时请务必每次都自己实际测试。
-        </span>
-        <span className="block">
-          隐身靠的是操作系统和会议软件的配合：换一台电脑、升级识屏或操作系统、换会议软件（或者它升级了、换了共享方式），都可能让隐身失效，对方看到窗口、黑框或窗口边缘。少数会议软件、浏览器和录屏方式本来就能拍到窗口。别人测过能用，不代表在你的电脑上也能用。
-        </span>
-        <span className="block">
-          测试方法：用手机或另一台电脑加入同一个会议，按正式使用时的方式共享屏幕（共享整个屏幕还是某个窗口要一致），打开平时要用的设置（鼠标穿透、悬浮工具条等），把截图、追问、切换模式、隐藏再显示窗口、拖动窗口边缘都做一遍，看对方画面里有没有识屏。只是在浏览器里共享屏幕的，也可以打开{' '}
-          <a
-            href="https://mozilla.github.io/webrtc-landing/gum_test.html"
-            target="_blank"
-            rel="noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            WebRTC 测试页
-          </a>{' '}
-          点「Screen capture」自己看。大家的测试经验见{' '}
-          <a
-            href="https://github.com/ooboqoo/shiping/issues/21"
-            target="_blank"
-            rel="noreferrer"
-            className="text-blue-600 hover:underline"
-          >
-            GitHub Issue #21
-          </a>
-          。
-        </span>
+        工具窗口在共享屏幕时自动隐藏(对方不可见)，但小部分会议软件可能需要配置才能隐藏。所以如果你对隐身功能有需求，务必在正式使用前用「当前电脑」+「当前会议软件」测试一下。详见{' '}
+        <DownloadLink className="text-blue-600 hover:underline">下载页面</DownloadLink>。
       </span>
     )
   },
@@ -195,19 +127,6 @@ const faqs = [
         作答时会优先参考，经历类问题会结合资料里的项目和数据来答。资料只保存在本机，但会随每次请求一起发给该模式使用的
         AI 平台；资料越多，回答越慢、费用越高，建议每个模式不超过 3 万字。PDF
         提取出的文字可能排版错乱，可以点编辑按钮修正。
-      </span>
-    )
-  },
-  {
-    question: '能在手机上看答案吗？手机打不开怎么办？',
-    answer: (
-      <span>
-        可以。在「设置 → 手机同步」打开「局域网」，手机连同一个 Wi-Fi
-        扫码即可；手机用流量的话用「公网中转」，需要自己的服务器。手机只看不操作，电脑上按
-        <ShortcutRenderer shortcut="CommandOrControl+J" className="text-xs mx-1" />/
-        <ShortcutRenderer shortcut="CommandOrControl+K" className="text-xs mx-1" />
-        翻页时手机跟着翻。电脑能打开、手机打不开，多半是防火墙没放行当前网络（Windows 换了 Wi-Fi
-        后常见），也可能是手机连了访客网络或开着 VPN，处理办法见设置页的「使用须知」。
       </span>
     )
   },

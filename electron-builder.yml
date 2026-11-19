@@ -1,8 +1,8 @@
 appId: com.electron.app # 改名后不变：macOS 的权限授予和 Windows 安装的升级都认它
-productName: 识屏
+productName: 胖猫面试助手
 extraMetadata:
   # Windows exe 的 FileDescription 取自 description，任务管理器「进程」页显示的就是它；package.json 的那句长介绍留给仓库
-  description: Shiping
+  description: 胖猫面试助手
 directories:
   buildResources: build
 # 只列运行要用的，仓库里新加的文件（文档、演示动图、工具配置、relay/ 等）就不会悄悄打进安装包。
@@ -11,13 +11,14 @@ files:
   - out/**
   - resources/** # 托盘图标等，见下面的 asarUnpack
   - LICENSE
+  - '!**/v001/**' # 本地打包产物目录，必须排除以免 1.6G 膨胀
 asarUnpack:
   - resources/**
 afterPack: build/after-pack.mjs # macOS 由它用自签名证书签名，原因见文件开头
 win:
-  executableName: Shiping # 任务管理器「详细信息」页显示的文件名；快捷方式和卸载列表仍用 productName「识屏」
+  executableName: 胖猫面试助手 # 任务管理器「详细信息」页显示的文件名；快捷方式和卸载列表仍用 productName
 nsis:
-  artifactName: ${name}-${version}-setup.${ext}
+  artifactName: ${name}-${version}-${arch}-setup.${ext} # 带架构名，arm64/x64 分开出包不互相覆盖
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
