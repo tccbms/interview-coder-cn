@@ -160,7 +160,6 @@ function exhaustSession(): void {
   exhausted = true
   remainingSeconds = 0
   void endSession('exhausted')
-  broadcastNotice('error', '余额不足，请充值')
   emitRechargeRequired()
   broadcast()
 }
@@ -216,7 +215,6 @@ function markExhausted(message: string): void {
   remainingSeconds = 0
   clearTimers()
   lastGateMessage = message
-  broadcastNotice('error', message)
   emitRechargeRequired()
   broadcast()
 }
@@ -233,7 +231,6 @@ export async function ensureSessionStarted(): Promise<boolean> {
   }
   if (exhausted) {
     lastGateMessage = '余额不足，请充值'
-    broadcastNotice('error', lastGateMessage)
     emitRechargeRequired()
     broadcast()
     return false
@@ -347,7 +344,6 @@ async function heartbeatTick(): Promise<void> {
       exhausted = true
       remainingSeconds = 0
       await endSession('exhausted')
-      broadcastNotice('error', '余额不足，请充值')
       emitRechargeRequired()
       broadcast()
       return
@@ -388,7 +384,6 @@ async function heartbeatTick(): Promise<void> {
     exhausted = true
     remainingSeconds = 0
     await endSession('exhausted')
-    broadcastNotice('error', '余额不足，请充值')
     emitRechargeRequired()
     broadcast()
     return

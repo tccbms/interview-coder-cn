@@ -31,6 +31,8 @@ export function AppHeader({ mode }: { mode: AppMode }) {
   const elapsed = useElapsed()
   const setDurationMs = useSolutionStore((state) => state.setDurationMs)
   const [appVersion, setAppVersion] = useState('')
+  // 剩余不足 10 分钟：顶栏左上角用绿色徽标提醒充值
+  const lowBalance = billing.exhausted || billing.remainingSeconds <= 600
 
   useEffect(() => {
     window.api.getAppVersion().then(setAppVersion)
@@ -59,20 +61,22 @@ export function AppHeader({ mode }: { mode: AppMode }) {
           {formatDuration(elapsed)}
         </span>
       )}
-      {/* 剩余时长：两种模式都展示；余额低或耗尽变红，点击跳转个人中心充值 */}
+      {/* 剩余时长：两种模式都展示；余额低于 10 分钟或耗尽时用绿色徽标提醒，点击跳转个人中心充值 */}
       <button
         type="button"
         title="剩余时长，点击前往充值"
         className={cn(
-          'shrink-0 flex items-center gap-1 whitespace-nowrap pl-2 text-xs tabular-nums pointer-events-auto [-webkit-app-region:no-drag]',
-          billing.exhausted || billing.remainingSeconds <= 60
-            ? 'text-red-500'
-            : 'opacity-70 hover:opacity-100'
+          'shrink-0 flex items-center gap-1 whitespace-nowrap text-xs tabular-nums pointer-events-auto [-webkit-app-region:no-drag]',
+          lowBalance
+            ? 'ml-6 rounded bg-emerald-600 px-2 py-0.5 font-medium text-white hover:bg-emerald-500'
+            : 'pl-2 opacity-70 hover:opacity-100'
         )}
         onClick={() => navigate('/settings?tab=account')}
       >
         <Clock className="size-3" />
-        {formatRemainingSeconds(billing.remainingSeconds)}
+        {lowBalance
+          ? `剩余时长 ${formatRemainingSeconds(billing.remainingSeconds)} 请充值`
+          : formatRemainingSeconds(billing.remainingSeconds)}
       </button>
       <div
         className="flex min-w-0 items-baseline justify-center gap-1.5 px-2"
