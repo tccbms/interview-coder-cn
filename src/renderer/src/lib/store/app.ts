@@ -15,6 +15,9 @@ interface AppStore extends AppState {
   /** Where the check API says to get the newest build; the help page links to it */
   downloadUrl: string | null
   setDownloadUrl: (url: string | null) => void
+  /** Where the check API says to recharge; 个人中心's 充值联系 button links to it */
+  rechargeUrl: string | null
+  setRechargeUrl: (url: string | null) => void
   setIgnoreMouse: (ignore: boolean) => void
   toggleIgnoreMouse: () => void
   /** Adopt what main reports; it sends its whole state, of which these are the fields used here */
@@ -49,6 +52,10 @@ export const useAppStore = create<AppStore>()((set) => ({
   downloadUrl: null,
   setDownloadUrl: (downloadUrl) => {
     set({ downloadUrl })
+  },
+  rechargeUrl: null,
+  setRechargeUrl: (rechargeUrl) => {
+    set({ rechargeUrl })
   },
   setIgnoreMouse: (ignore) => {
     set({ ignoreMouse: ignore })

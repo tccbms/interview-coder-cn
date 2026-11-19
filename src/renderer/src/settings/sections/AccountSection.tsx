@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Clock3, LogOut, RefreshCw, Ticket, UserRound } from 'lucide-react'
+import { Clock3, ExternalLink, LogOut, RefreshCw, Ticket, UserRound } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Field, SettingsCard } from '../components'
+import { useAppStore } from '@/lib/store/app'
 import type { AccountProfile } from '../../../../shared/account'
 
 /** 秒数 → 「1 小时 30 分钟」 */
@@ -22,6 +23,8 @@ export function AccountSection() {
   const [loading, setLoading] = useState(true)
   const [cardCode, setCardCode] = useState('')
   const [redeeming, setRedeeming] = useState(false)
+  // 服务端下发的网页充值地址（/api/account/config 的 rechargeUrl）
+  const rechargeUrl = useAppStore((state) => state.rechargeUrl)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -90,7 +93,23 @@ export function AccountSection() {
         </div>
       </SettingsCard>
 
-      <SettingsCard Icon={Ticket} title="卡密充值">
+      <SettingsCard
+        Icon={Ticket}
+        title="卡密充值"
+        extra={
+          rechargeUrl ? (
+            <a
+              href={rechargeUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="ml-auto inline-flex h-7 items-center gap-1 rounded-md bg-red-600 px-2 text-xs font-medium text-white hover:bg-red-500"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              充值联系
+            </a>
+          ) : null
+        }
+      >
         <div className="space-y-3">
           <Field label="卡密" note="充值成功后立即到账">
             <div className="flex items-center gap-2">

@@ -17,6 +17,8 @@ export interface RemoteConfig {
   audioKey: string
   /** Where the newest version is downloaded from */
   downloadUrl: string
+  /** Where 个人中心's 充值联系 button leads (web recharge page) */
+  rechargeUrl: string
 }
 
 /** Endpoint names as the server spells them, in this file's terms */
@@ -25,7 +27,8 @@ const FIELDS = {
   aiUrl: 'aiUrl',
   aiKey: 'aiKey',
   audioKey: 'audioKey',
-  downloadUrl: 'downloadUrl'
+  downloadUrl: 'downloadUrl',
+  rechargeUrl: 'rechargeUrl'
 } as const
 
 function readText(source: Record<string, unknown>, key: string): string {
@@ -54,10 +57,16 @@ export function parseRemoteConfig(data: unknown): RemoteConfig | null {
     aiUrl: readText(source, FIELDS.aiUrl),
     aiKey: readText(source, FIELDS.aiKey),
     audioKey: readText(source, FIELDS.audioKey),
-    downloadUrl: readText(source, FIELDS.downloadUrl)
+    downloadUrl: readText(source, FIELDS.downloadUrl),
+    rechargeUrl: readText(source, FIELDS.rechargeUrl)
   }
   const usable =
-    config.version || config.aiUrl || config.aiKey || config.audioKey || config.downloadUrl
+    config.version ||
+    config.aiUrl ||
+    config.aiKey ||
+    config.audioKey ||
+    config.downloadUrl ||
+    config.rechargeUrl
   return usable ? config : null
 }
 
