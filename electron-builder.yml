@@ -9,12 +9,16 @@ files:
   - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  # Local copies of built installers (git-ignored scratch dir); they must never
+  # be packed into app.asar — doing so inflated the app from ~450M to 1.6G.
+  - '!v001/**'
 asarUnpack:
   - resources/**
 win:
   executableName: 截屏解题助手
 nsis:
-  artifactName: ${name}-${version}-setup.${ext}
+  # 带架构名，arm64 / x64 分开出包不会互相覆盖，blockmap 也各自对应
+  artifactName: ${name}-${version}-${arch}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always

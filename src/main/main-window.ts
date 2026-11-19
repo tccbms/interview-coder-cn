@@ -18,22 +18,21 @@ export function applyContentProtection(window: BrowserWindow, forceReset = false
  * (backgroundThrottling only covers occlusion, not full invisibility). A window
  * restored from such a state — Cmd+M to Dock, Cmd+H app-hide, Mission Control
  * full-screen switch — often comes back with the compositor still sleeping,
- * leaving the frameless transparent overlay painted at its last frame. Toggle
- * the background color to force a repaint; cheap enough to call on every
+ * leaving the frameless transparent overlay painted at its last frame. Ask the
+ * web contents for a full repaint instead; cheap enough to call on every
  * show/restore/focus and reliable across Electron versions.
  */
 function kickCompositor(window: BrowserWindow): void {
   if (!window || window.isDestroyed()) return
   try {
-    const wc = window.webContents
-    const prev = wc.getBackgroundColor()
-    wc.setBackgroundColor('#00000000')
-    setImmediate(() => {
-      if (!window.isDestroyed()) wc.setBackgroundColor(prev)
-    })
+    // Schedule a full repaint without touching the window's background color.
+    // Never toggle backgroundColor here: the window is created without one (it
+    // relies on transparent: true), and getBackgroundColor() reports opaque
+    // white (#FFFFFFFF) in that case — restoring it would make the overlay
+    // permanently opaque.
+    window.webContents.invalidate()
   } catch {
-    // Older Electron versions or certain platforms don't support
-    // getBackgroundColor; silently skip.
+    // Silently skip if the web contents is gone or the API is unavailable.
   }
 }
 
@@ -88,12 +87,8 @@ export function createWindow(): void {
     mainWindow.setTitle('')
   })
 
-  // Prevent Cmd+M from doing anything — the above minimizable:false already
-  // stops window.minimize() on Electron's side, but catch this as a belt-and-
-  // suspenders guard against future Electron changes or platform quirks.
-  mainWindow.on('minimize', (event) => {
-    event.preventDefault()
-  })
+  // Cmd+M is handled by minimizable:false above; Electron's 'minimize' event is
+  // emitted after the fact and cannot be cancelled, so there is nothing to guard.
 
   // When the window becomes visible again (any path: soft-hide restore,
   // workspace switch, Mission Control, focus return), Chromium's compositor
@@ -118,7 +113,9 @@ export function createWindow(): void {
     kickCompositor(mainWindow)
   })
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
+  // show:false above means nothing is on screen until this fires; without it the
+  // window stays hidden after launch and only the hideOrShow shortcut reveals it.
+  mainWindow.on('ready-to-show', () => {
     mainWindow.show()
     mainWindow.setAlwaysOnTop(true, 'screen-saver', 1)
     mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })

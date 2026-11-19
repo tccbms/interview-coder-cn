@@ -121,7 +121,10 @@ function createPickerWindow(display: Display): BrowserWindow {
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     window.loadURL(`${process.env['ELECTRON_RENDERER_URL']}#/region-picker`)
   } else {
-    window.loadFile(join(__dirname, '../renderer/index.html'), { hash: 'region-picker' })
+    // `loadFile` appends the hash verbatim (`#region-picker`), while `loadURL`
+    // in dev is given `#/region-picker`. main.tsx matches the latter, so pass
+    // the leading slash to keep production identical to development.
+    window.loadFile(join(__dirname, '../renderer/index.html'), { hash: '/region-picker' })
   }
   return window
 }

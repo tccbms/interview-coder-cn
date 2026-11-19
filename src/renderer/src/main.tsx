@@ -20,7 +20,10 @@ if (!window.location.hash || window.location.hash === '#/') {
 
 // The capture-region picker is a throwaway window per screen: it must not run
 // App's settings sync or shortcut registration, so it skips App altogether
-const isRegionPicker = window.location.hash === '#/region-picker'
+// Accept both `#/region-picker` (dev loadURL / canonical) and `#region-picker`
+// (what `loadFile({hash})` would produce without a leading slash), so a picker
+// window never falls through to rendering the full app.
+const isRegionPicker = /^#\/?region-picker$/.test(window.location.hash)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>{isRegionPicker ? <RegionPicker /> : <App />}</StrictMode>
