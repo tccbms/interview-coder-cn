@@ -17,6 +17,10 @@ asarUnpack:
 afterPack: build/after-pack.mjs # macOS 由它用自签名证书签名，原因见文件开头
 win:
   executableName: 胖猫面试助手 # 任务管理器「详细信息」页显示的文件名；快捷方式和卸载列表仍用 productName
+  # 跳过 rcedit + signtool（macOS 上需要 wine + freetype，装起来麻烦）。
+  # 代价：exe 内嵌的 FileDescription / 图标保持 Electron 默认值（任务管理器进程名会显示 Electron）。
+  # 安装器、快捷方式、开始菜单都用 productName「胖猫面试助手」，不受影响。
+  signAndEditExecutable: false
 nsis:
   artifactName: ${name}-${version}-${arch}-setup.${ext} # 带架构名，arm64/x64 分开出包不互相覆盖
   shortcutName: ${productName}
@@ -38,9 +42,8 @@ dmg:
   # macOS 只构建 CI runner 所在架构（arm64），文件名带上架构避免误下载
   artifactName: ${name}-${version}-${arch}.${ext}
 npmRebuild: false
-publish:
-  provider: github
-  owner: ooboqoo
-  repo: shiping
+# 本地打包不走自动上传；GitHub Release 由 CI 负责（CI 会注入 GH_TOKEN）。
+# 设为 null 会在所有 target 上都跳过 publish，避免本地 build 因缺 token 报错。
+publish: null
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

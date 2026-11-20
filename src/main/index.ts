@@ -2,6 +2,23 @@ import 'dotenv/config'
 import './legacy-name'
 import { app, desktopCapturer, globalShortcut, session } from 'electron'
 
+// macOS 14.2+ / Electron 39+ 默认走 Apple 新的 CoreAudio Tap API 做系统音频捕获，
+// 它需要 Info.plist 里的 NSAudioCaptureUsageDescription 键。
+//
+// 关键差异：
+//   · 打包后的 .app 由 Finder 启动 → Chromium 读 **我们自己** 的 Info.plist
+//     → 有 NSAudioCaptureUsageDescription → CoreAudio Tap 直接工作（✅ 不需要屏幕录制权限）
+//   · dev 模式由 Terminal/IDE 启动 → Chromium 读 **父程序** 的 Info.plist
+//     → Terminal/IDE 没那个键 → CoreAudio Tap 静默失败
+//
+// 所以只有 dev 模式才强制回退到老的 Screen & System Audio Recording 权限系统
+// （它只需要 macOS 系统级的屏幕录制权限，dev 时用户已经给 Trae/Terminal 了）。
+// 打包后的产品包必须走 CoreAudio Tap——老路径需要用户额外给 .app 授权屏幕录制，
+// 而新路径只靠 Info.plist 里的 NSAudioCaptureUsageDescription 就能跑。
+if (!app.isPackaged) {
+  app.commandLine.appendSwitch('disable-features', 'MacCatapLoopbackAudioForScreenShare')
+}
+
 type AbortLikeError = {
   name?: string
   code?: string
@@ -66,12 +83,20 @@ app.whenReady().then(async () => {
     desktopCapturer
       .getSources({ types: ['screen'] })
       .catch((err) => {
-        console.error('Failed to get screen sources for system audio:', err)
+        console.error('[display-media] getSources failed:', err)
         return []
       })
       .then((sources) => {
-        // null refuses the request: getDisplayMedia rejects with an AbortError
-        callback(sources.length > 0 ? ({ video: sources[0], audio: 'loopback' } as any) : (null as any))
+        console.log('[display-media] sources:', sources.length, 'platform:', process.platform)
+        if (sources.length > 0) {
+          // 有 disable-features 走老的 Screen & System Audio Recording 权限系统后，
+          // loopback 在 macOS 上也能正常工作（Chromium 老路径支持它）。
+          // 没 disable-features 时（CoreAudio Tap API）macOS 不认 loopback，会 Invalid capture constraints。
+          callback({ video: sources[0], audio: 'loopback' })
+        } else {
+          // null refuses → renderer 收到 AbortError（由 renderer 的 captureFailure 正确处理）
+          callback(null as any)
+        }
       })
   })
 
