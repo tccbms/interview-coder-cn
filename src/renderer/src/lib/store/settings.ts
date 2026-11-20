@@ -442,7 +442,7 @@ const defaultSettings: Settings = {
   apiKey: '',
   apiHeaders: '',
   model: '',
-  disableThinking: false,
+  disableThinking: true,
   reasoningEffort: '',
   customModels: [],
   customModelsByBaseURL: {},
@@ -587,7 +587,7 @@ export const useSettingsStore = create<SettingsStore>()(
           apiKey: source?.apiKey ?? '',
           apiHeaders: source?.apiHeaders ?? '',
           model: source?.model ?? '',
-          disableThinking: source?.disableThinking ?? false,
+          disableThinking: source?.disableThinking ?? true,
           reasoningEffort: source?.reasoningEffort ?? '',
           vision: source?.vision
         })

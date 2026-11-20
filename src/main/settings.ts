@@ -145,11 +145,12 @@ export const settings = {
   apiHeaders: '',
   model: process.env.MODEL || '',
   /**
-   * The active profile's 「关闭思考」, see thinking.ts. Must stay falsy here:
-   * App.tsx fills blank renderer fields from main, so `true` would overwrite a
-   * user's "off".
+   * The active profile's 「关闭思考」, see thinking.ts. Default ON because
+   * thinking models (DeepSeek V4.1 Flash / GLM-4.5V etc.) are 4–7× slower —
+   * close to useless for real-time interview hints. Users who want the full
+   * chain-of-thought reasoning can toggle it back off in 「设置 → AI 模型」.
    */
-  disableThinking: false,
+  disableThinking: true,
   /** The active profile's 「思考强度」; empty leaves it to the model */
   reasoningEffort: '' as ReasoningEffort,
   /** Every saved AI profile, synced from the renderer; each mode picks one by id */
