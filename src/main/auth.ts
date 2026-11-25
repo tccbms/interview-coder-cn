@@ -135,7 +135,8 @@ ipcMain.handle(
       account: account.trim(),
       password,
       deviceId,
-      deviceType: DEVICE_TYPE
+      deviceType: DEVICE_TYPE,
+      type: 'interview'
     })
     if (!result.ok) {
       console.log('[auth] login failed:', result.message)

@@ -39,7 +39,11 @@ export function applyRemoteConfig(next: RemoteConfig): void {
 /** 从 /api/account/config 拉取配置（需登录 token）；失败仅记录日志，沿用本地已有配置 */
 export async function fetchRemoteConfig(token: string): Promise<void> {
   const deviceId = await getDeviceId()
-  const result = await postForm('/api/account/config', { deviceId, deviceType: DEVICE_TYPE }, token)
+  const result = await postForm(
+    '/api/account/config',
+    { deviceId, deviceType: DEVICE_TYPE, type: 'interview' },
+    token
+  )
   if (!result.ok) {
     console.error('[remote-config] fetch failed:', result.message)
     return
